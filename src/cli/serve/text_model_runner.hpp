@@ -1,0 +1,530 @@
+#ifndef GUFO_SERVER_TEXT_MODEL_RUNNER_HPP_
+#define GUFO_SERVER_TEXT_MODEL_RUNNER_HPP_
+
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <filesystem>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <span>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include "src/cli/serve/continuation_cache.hpp"
+#include "src/cli/serve/text_generation_backend.hpp"
+#include "src/core/sampling.hpp"
+
+namespace gufo::grammar {
+class Engine;
+}  // namespace gufo::grammar
+
+namespace gufo::server {
+
+using TextRunnerToken = ContinuationToken;
+
+/// Immutable model-owned input which travels with one scheduled request.
+/// Cache identity supplements token IDs for inputs such as image embeddings.
+struct TextPromptContext {
+  virtual ~TextPromptContext() = default;
+  std::vector<std::uint8_t> cache_identity;
+};
+
+struct TextPreparedPrompt {
+  std::vector<TextRunnerToken> tokens;
+  std::shared_ptr<const TextPromptContext> context;
+  /// Snapshot before mutable assistant framing. Zero uses the complete prompt.
+  std::size_t cache_prefix_tokens{0};
+};
+
+struct TextRunnerDiskCacheOptions {
+  static constexpr std::size_t kDefaultCapacityBytes =
+      std::size_t{8} * 1024U * 1024U * 1024U;
+  static constexpr std::size_t kAutomaticStagingMaxBytes =
+      std::size_t{1} * 1024U * 1024U * 1024U;
+  std::filesystem::path directory;
+  std::size_t capacity_bytes{kDefaultCapacityBytes};
+  /// Zero selects 1/8 of available host RAM, capped at 1 GiB and
+  /// capacity_bytes.
+  std::size_t staging_capacity_bytes{0};
+  /// Shared prefixes shorter than this are cheaper to prefill than to restore.
+  std::size_t shared_prefix_min_tokens{128};
+  /// Bound on shared-prefix snapshots written while prefilling one request.
+  std::size_t shared_prefix_max_boundaries{4};
+  /// Snapshot bytes pinned per tier (RAM and disk; each clamps it to half its
+  /// capacity). Pinned shared prefixes skip LRU eviction; zero disables.
+  std::size_t pin_capacity_bytes{std::size_t{4} * 1024U * 1024U * 1024U};
+  /// Distinct conversations that must share a prompt prefix to pin it.
+  std::size_t pin_min_conversations{3};
+};
+
+/// Host RAM the server may use for retained snapshots, idle sessions paged
+/// out of the device pool and disk-cache staging: `--host-memory-budget`
+/// when set (required where the container view misstates the host, e.g.
+/// lxcfs over a host that also backs GTT), otherwise the cgroup/meminfo
+/// availability at call time minus 8 GiB (a quarter in small cgroups).
+/// Snapshots get half, idle-session paging and disk staging a quarter
+/// each; overflow goes to NVMe (--cache-disk).
+void SetHostMemoryBudget(std::size_t bytes) noexcept;
+[[nodiscard]] std::size_t HostMemoryBudgetBytes();
+[[nodiscard]] bool HostMemoryBudgetExplicit() noexcept;
+/// Retained in-memory snapshot share of HostMemoryBudgetBytes().
+[[nodiscard]] std::size_t HostSnapshotBudgetBytes();
+
+enum class TextExecutionPlanKind : std::uint8_t {
+  kSerial,
+  kBatched,
+};
+
+struct TextExecutionPlan {
+  TextExecutionPlanKind kind{TextExecutionPlanKind::kSerial};
+  std::size_t physical_width{1};
+
+  bool operator==(const TextExecutionPlan&) const = default;
+};
+
+struct TextRunnerCapabilities {
+  bool incremental_prefill{false};
+  bool snapshot{false};
+  bool fork{false};
+  bool final_token_advance_required{true};
+  bool incremental_text_is_exact{false};
+  bool multi_token_decode{false};
+  bool batched_multi_token_decode{false};
+  /// Zero means no physical-width limit.
+  std::size_t batched_multi_token_decode_max_width{0};
+  bool prefix_reuse{true};
+  /// Rows one model step may carry for prompt chunks of several requests
+  /// (with or without decode rows); zero runs one prompt chunk at a time.
+  std::size_t fused_prefill_rows{0};
+  /// SelectNext of different requests may run concurrently (it reads only
+  /// the request's own host state and immutable model data).
+  bool concurrent_select{false};
+};
+
+/// Model-owned compatibility identity for restart-safe snapshots.
+///
+/// The bytes are canonical and opaque to serving code. They must cover every
+/// model, tokenizer, template, layout, precision, context-policy, and adapter
+/// property that can change restored continuation semantics. Executable
+/// revisions are intentionally excluded when they retain the same state ABI.
+struct TextRunnerPersistenceDescriptor {
+  std::vector<std::uint8_t> compatibility_identity;
+  std::uint32_t payload_version{0};
+
+  bool operator==(const TextRunnerPersistenceDescriptor&) const = default;
+};
+
+struct TextRunnerDescriptor {
+  std::string model_id;
+  std::string state_abi;
+  std::uint32_t max_context{0};
+  TextRunnerCapabilities capabilities;
+  std::optional<TextRunnerPersistenceDescriptor> persistence;
+};
+
+/// Optional byte claims made before state allocation.
+///
+/// A missing value is an explicit "not yet measurable" claim. When both the
+/// aggregate state capacity and per-request state are known, the common pool
+/// validates the requested concurrency before creating model-private state.
+struct TextRunnerResourceClaim {
+  std::optional<std::size_t> resident_weights_bytes;
+  std::optional<std::size_t> state_capacity_bytes;
+  std::optional<std::size_t> per_request_state_bytes;
+  std::optional<std::size_t> temporary_scratch_bytes;
+  /// Aggregate bytes currently available for immutable retained snapshots.
+  ///
+  /// The pool queries this again after creating all mutable request states.
+  std::optional<std::size_t> retained_snapshot_capacity_bytes;
+  bool requires_device_runtime_lock{false};
+};
+
+struct TextRunnerMeasuredResources {
+  std::optional<std::size_t> per_request_state_bytes;
+  std::optional<std::size_t> temporary_scratch_bytes;
+};
+
+struct TextPrefillStep {
+  std::size_t consumed_tokens{0};
+  bool decode_ready{false};
+};
+
+struct TextDecodeSelection {
+  bool stop{false};
+  TextRunnerToken token{0};
+  std::string piece;
+  /// Present for probing requests (SamplingConfig::top_logprobs >= 0).
+  std::optional<sampling::TokenLogprobs> logprobs{};
+};
+
+struct TextDecodeStep {
+  std::vector<TextDecodeSelection> selections;
+  std::size_t draft_tokens{0};
+  std::size_t draft_accepted_tokens{0};
+  bool stop{false};
+  /// Execution actually used for this request, including model-owned subgroup
+  /// dispatch. A runner's advertised maximum is not evidence of batching.
+  TextExecutionPlan execution_plan{};
+  std::exception_ptr failure{};
+};
+
+/// Model-private state driven only through TextModelRunner work units.
+class TextRunnerState : public ContinuationState {
+public:
+  using CancellationCheck = std::function<bool()>;
+
+  /// Installs a request-scoped cancellation check for model calls that can
+  /// yield internally. Implementations that only yield between work units may
+  /// keep the default no-op behavior.
+  virtual void SetCancellationCheck(const CancellationCheck&) {}
+
+  /// Actual request-owned allocations when the provider can measure them.
+  [[nodiscard]] virtual TextRunnerMeasuredResources MeasuredResources()
+      const noexcept {
+    return {};
+  }
+};
+
+/// Immutable model-owned continuation payload.
+///
+/// Common serving code may account for the payload but must not inspect or
+/// reinterpret its bytes.
+class TextRunnerSnapshot : public ContinuationSnapshot {
+public:
+  TextRunnerSnapshot() = default;
+  ~TextRunnerSnapshot() override = default;
+
+  TextRunnerSnapshot(const TextRunnerSnapshot&) = delete;
+  TextRunnerSnapshot& operator=(const TextRunnerSnapshot&) = delete;
+  TextRunnerSnapshot(TextRunnerSnapshot&&) = delete;
+  TextRunnerSnapshot& operator=(TextRunnerSnapshot&&) = delete;
+};
+
+struct TextRunnerAdvance {
+  std::reference_wrapper<TextRunnerState> state;
+  TextRunnerToken token{0};
+  std::exception_ptr* failure{nullptr};
+};
+
+struct TextRunnerDecode {
+  std::reference_wrapper<TextRunnerState> state;
+  std::size_t max_tokens{0};
+  std::reference_wrapper<sampling::SamplerState> sampler;
+};
+
+/// A prompt chunk scheduled with a decode batch (Prefill's arguments).
+struct TextRunnerPrefill {
+  std::reference_wrapper<TextRunnerState> state;
+  std::span<const TextRunnerToken> prompt;
+  std::size_t offset{0};
+  std::size_t max_input_tokens{0};
+  TextPrefillStep step{};
+  std::exception_ptr failure{};
+};
+
+/// Coarse text-model adapter used by cache, scheduling, and HTTP layers.
+///
+/// Prefill and Advance are the only model execution work units. SelectNext
+/// exposes the already-computed frontier token separately so streaming does
+/// not wait for the following decode forward pass.
+class TextModelRunner {
+public:
+  TextModelRunner() = default;
+  virtual ~TextModelRunner() = default;
+
+  TextModelRunner(const TextModelRunner&) = delete;
+  TextModelRunner& operator=(const TextModelRunner&) = delete;
+  TextModelRunner(TextModelRunner&&) = delete;
+  TextModelRunner& operator=(TextModelRunner&&) = delete;
+
+  [[nodiscard]] virtual TextRunnerDescriptor Descriptor() const = 0;
+  [[nodiscard]] virtual TextRunnerResourceClaim ResourceClaim() const = 0;
+  [[nodiscard]] virtual std::vector<TextExecutionPlan> SupportedPlans()
+      const = 0;
+
+  /// Device KV pool occupancy, for runners backed by a shared VMM pool
+  /// (src/core/hip/vmm.hpp). Zero for runners without one.
+  [[nodiscard]] virtual std::size_t KvPoolBytesUsed() const noexcept {
+    return 0;
+  }
+  [[nodiscard]] virtual std::size_t KvPoolBytesLimit() const noexcept {
+    return 0;
+  }
+
+  [[nodiscard]] virtual std::vector<TextRunnerToken> Tokenize(
+      std::string_view text) const = 0;
+  [[nodiscard]] virtual std::optional<std::vector<TextRunnerToken>>
+  RenderAndTokenize(const ChatRequest& request) const = 0;
+  [[nodiscard]] virtual std::optional<TextPreparedPrompt> PreparePrompt(
+      const ChatRequest& request) const {
+    for (const auto& message : request.messages) {
+      if (!message.images.empty()) {
+        throw std::invalid_argument("model does not support image input");
+      }
+    }
+    auto tokens = RenderAndTokenize(request);
+    if (!tokens)
+      return std::nullopt;
+    return TextPreparedPrompt{std::move(*tokens), {}};
+  }
+  /// Prompt length that conversations sharing a system prompt and tools have
+  /// in common (for chat templates, the end of that block), or zero. The pool
+  /// checkpoints there, so a new conversation restores it on its first turn.
+  [[nodiscard]] virtual std::size_t SharedPromptPrefix(
+      std::span<const TextRunnerToken> /*prompt*/) const {
+    return 0;
+  }
+  /// Called before cache restoration, prefill or selection, including
+  /// a complete prefix hit. Must replace, never inherit, the previous request.
+  virtual void SetPromptContext(
+      TextRunnerState&,
+      std::shared_ptr<const TextPromptContext> context) const {
+    if (context != nullptr) {
+      throw std::invalid_argument("model does not support this prompt context");
+    }
+  }
+  /// Chat protocol of the model's template family: rendering, cache prefix
+  /// and the output parser.
+  [[nodiscard]] virtual const ChatProtocol& Protocol() const = 0;
+  /// Grammar engine over this model's vocabulary for structured outputs, or
+  /// nullptr when the runner cannot sample constrained requests on the host.
+  [[nodiscard]] virtual const grammar::Engine* Grammar() const {
+    return nullptr;
+  }
+  [[nodiscard]] virtual std::string Decode(
+      std::span<const TextRunnerToken> tokens) const = 0;
+
+  [[nodiscard]] virtual std::unique_ptr<TextRunnerState> CreateState()
+      const = 0;
+
+  /// Optional first-token preview without advancing model state. The caller
+  /// supplies a copy of the sampler; normal decoding must reproduce the token.
+  /// This lets serving publish a token before capturing its prompt snapshot.
+  [[nodiscard]] virtual std::optional<TextDecodeSelection> PreviewFirstToken(
+      TextRunnerState&, sampling::SamplerState&) const {
+    return std::nullopt;
+  }
+  /// Reconciles model-private metadata after an exact mutable or restored
+  /// prefix is leased. The default runner state needs no additional work.
+  virtual void PreparePrefixReuse(
+      TextRunnerState& state, std::span<const TextRunnerToken> prefix) const {
+    (void)state;
+    (void)prefix;
+  }
+  /// Tells a request state that its next execution will use a multi-request
+  /// batch. Runners with request-local speculative state may discard work that
+  /// the batched path cannot consume.
+  virtual void PrepareBatchExecution(TextRunnerState& state) const {
+    (void)state;
+  }
+  /// Processes at most max_input_tokens, yielding after one model-owned
+  /// chunk even when the scheduler grants the whole remaining prompt.
+  [[nodiscard]] virtual TextPrefillStep Prefill(
+      TextRunnerState& state, std::span<const TextRunnerToken> prompt,
+      std::size_t offset, std::size_t max_input_tokens) const = 0;
+  [[nodiscard]] virtual TextDecodeSelection SelectNext(
+      TextRunnerState& state, sampling::SamplerState& sampler) const = 0;
+  virtual void Advance(TextRunnerState& state, TextRunnerToken token) const = 0;
+  [[nodiscard]] virtual TextDecodeStep DecodeStep(
+      TextRunnerState& state, std::size_t max_tokens,
+      sampling::SamplerState& sampler) const;
+  [[nodiscard]] virtual std::vector<TextDecodeStep> DecodeBatch(
+      std::span<const TextRunnerDecode> decodes) const;
+  /// Decodes (possibly none) and prefills one chunk per prompt, filling
+  /// each `step` or `failure`. Runners advertising fused_prefill_rows run
+  /// everything as one model step; the default decodes, then prefills each.
+  [[nodiscard]] virtual std::vector<TextDecodeStep> DecodePrefillBatch(
+      std::span<const TextRunnerDecode> decodes,
+      std::span<TextRunnerPrefill> prefills) const;
+  /// AdvanceBatch plus prompt chunks, as DecodePrefillBatch.
+  virtual void AdvancePrefillBatch(std::span<const TextRunnerAdvance> advances,
+                                   std::span<TextRunnerPrefill> prefills) const;
+  virtual void AdvanceBatch(std::span<const TextRunnerAdvance> advances) const;
+  [[nodiscard]] virtual std::size_t CheckpointPosition(
+      const TextRunnerState& state) const = 0;
+  /// Retain a safe executed frontier when cancellation interrupts publication
+  /// of a completed speculative block. Called with cancellation checks cleared.
+  virtual void PrepareCancellation(TextRunnerState&) const {}
+
+  /// Captures an immutable exact continuation at CheckpointPosition(state).
+  ///
+  /// The default implementations fail explicitly for runners that do not
+  /// advertise the corresponding capabilities.
+  [[nodiscard]] virtual std::size_t SnapshotPayloadBytes(
+      const TextRunnerState& state) const;
+  /// May run on a capture worker while this state is frozen. Must not mutate
+  /// shared execution scratch; other sessions may execute concurrently.
+  [[nodiscard]] virtual std::unique_ptr<TextRunnerSnapshot> Snapshot(
+      const TextRunnerState& state) const;
+  virtual void RestoreOrFork(TextRunnerState& state,
+                             const TextRunnerSnapshot& snapshot) const;
+
+  /// Returns the exact serialized bytes required by a persistent snapshot.
+  ///
+  /// Persistent serialization is separate from the in-memory snapshot layout:
+  /// a provider may retain GPU-private state in RAM while exposing a compact,
+  /// versioned disk representation.
+  [[nodiscard]] virtual std::size_t PersistentSnapshotPayloadBytes(
+      const TextRunnerSnapshot& snapshot) const;
+
+  /// Serializes one immutable snapshot into exactly-sized common-store staging.
+  ///
+  /// Returns the number of initialized bytes. It must equal
+  /// PersistentSnapshotPayloadBytes(snapshot).
+  [[nodiscard]] virtual std::size_t SerializePersistentSnapshot(
+      const TextRunnerSnapshot& snapshot,
+      std::span<std::uint8_t> destination) const;
+
+  using SnapshotSink = std::function<void(std::span<const std::uint8_t>)>;
+  /// Reads only immutable snapshot storage. May run on the persistence worker.
+  /// Host-backed providers stream directly without another payload allocation.
+  virtual void StreamPersistentSnapshot(const TextRunnerSnapshot& snapshot,
+                                        const SnapshotSink& sink) const;
+
+  /// Restores a version-compatible serialized payload into an existing state.
+  virtual void RestorePersistentSnapshot(
+      TextRunnerState& state, std::span<const std::uint8_t> payload) const;
+};
+
+/// Bounded pool of opaque runner states with exact-prefix continuation reuse.
+class TextRunnerPool {
+public:
+  using CancellationCheck = std::function<bool()>;
+
+  class Request {
+  public:
+    struct CommitMetrics {
+      std::size_t snapshot_bytes{0};
+      double snapshot_ms{0.0};
+      std::size_t disk_queued_bytes{0};
+      double disk_enqueue_ms{0.0};
+      /// Shared-prefix snapshots queued for persistence during prefill.
+      std::size_t shared_prefix_snapshots{0};
+      std::size_t shared_prefix_bytes{0};
+      std::size_t shared_prefix_failures{0};
+      double shared_prefix_ms{0.0};
+    };
+
+    Request();
+    ~Request();
+
+    Request(const Request&) = delete;
+    Request& operator=(const Request&) = delete;
+    Request(Request&&) noexcept;
+    Request& operator=(Request&&) noexcept;
+
+    [[nodiscard]] explicit operator bool() const noexcept;
+    [[nodiscard]] bool cache_hit() const noexcept;
+    [[nodiscard]] ContinuationLookup cache_lookup() const noexcept;
+    [[nodiscard]] std::size_t cached_prompt_tokens() const noexcept;
+    [[nodiscard]] std::size_t cache_restore_bytes() const noexcept;
+    [[nodiscard]] double cache_restore_ms() const noexcept;
+    [[nodiscard]] bool cache_disk_hit() const noexcept;
+    [[nodiscard]] std::size_t prompt_tokens() const noexcept;
+    [[nodiscard]] bool prefill_complete() const noexcept;
+
+    void PrepareBatchExecution();
+    [[nodiscard]] TextPrefillStep Prefill(std::size_t max_input_tokens);
+    [[nodiscard]] TextDecodeSelection SelectNext();
+    void Advance();
+    [[nodiscard]] TextDecodeStep DecodeStep(std::size_t max_tokens);
+
+    /// Publishes a reusable continuation boundary.
+    ///
+    /// Snapshot-capable runners keep the immutable prompt frontier and the
+    /// final live state. Mutable-state runners publish their reported
+    /// checkpoint.
+    CommitMetrics Commit();
+    /// Release a cancelled request, retaining only completed model work and
+    /// an already captured prompt snapshot. Does not advance or sample tokens.
+    CommitMetrics Cancel() noexcept;
+    [[nodiscard]] std::optional<TextDecodeSelection> PreviewFirstToken();
+    void CapturePromptSnapshot();
+    /// Starts capture and polls completion without blocking other sessions.
+    [[nodiscard]] bool PreparePromptSnapshot();
+    [[nodiscard]] bool SnapshotPending() const;
+    void Invalidate() noexcept;
+
+  private:
+    friend class TextRunnerPool;
+    struct Impl;
+
+    explicit Request(std::unique_ptr<Impl> impl);
+    std::unique_ptr<Impl> impl_;
+  };
+
+  TextRunnerPool(
+      std::shared_ptr<TextModelRunner> runner, std::size_t state_count,
+      std::optional<TextRunnerDiskCacheOptions> disk_cache = std::nullopt);
+  ~TextRunnerPool();
+
+  TextRunnerPool(const TextRunnerPool&) = delete;
+  TextRunnerPool& operator=(const TextRunnerPool&) = delete;
+  TextRunnerPool(TextRunnerPool&&) = delete;
+  TextRunnerPool& operator=(TextRunnerPool&&) = delete;
+
+  /// Host-RAM snapshot and disk-cache occupancy, for /metrics gauges.
+  struct TextRunnerPoolMetrics {
+    std::size_t host_snapshot_bytes{0};
+    std::size_t host_snapshot_capacity_bytes{0};
+    std::size_t disk_cache_bytes{0};
+    std::size_t disk_cache_capacity_bytes{0};
+    std::size_t disk_cache_entries{0};
+  };
+
+  [[nodiscard]] const TextModelRunner& runner() const noexcept;
+  [[nodiscard]] std::size_t capacity() const noexcept;
+  [[nodiscard]] TextRunnerPoolMetrics metrics_snapshot() const;
+  [[nodiscard]] TextExecutionPlan SelectDecodePlan(
+      std::size_t ready_requests) const;
+  /// A prefilling request that joins a decode batch with its token budget.
+  struct PrefillCompanion {
+    Request* request{nullptr};
+    std::size_t max_input_tokens{0};
+    TextPrefillStep step{};
+    std::exception_ptr failure{};
+  };
+  /// With `prefills`, one decoding request suffices and the plan width
+  /// counts the prefilling requests.
+  [[nodiscard]] std::vector<TextDecodeStep> DecodeBatch(
+      std::span<Request*> requests, std::span<const std::size_t> max_tokens,
+      const TextExecutionPlan& plan, std::span<PrefillCompanion> prefills = {});
+  std::vector<std::exception_ptr> AdvanceBatch(
+      std::span<Request*> requests, const TextExecutionPlan& plan,
+      std::span<PrefillCompanion> prefills = {});
+  /// Prompt chunks of several prefilling requests in one model step.
+  void PrefillBatch(std::span<PrefillCompanion> prefills);
+  [[nodiscard]] Request Acquire(
+      std::vector<TextRunnerToken> prompt,
+      const sampling::SamplingConfig& sampling,
+      const CancellationCheck& is_cancelled = {},
+      std::shared_ptr<const TextPromptContext> context = {},
+      bool reuse_prompt = true, std::size_t cache_prefix_tokens = 0);
+  [[nodiscard]] Request Acquire(std::vector<TextRunnerToken> prompt,
+                                const CancellationCheck& is_cancelled = {});
+  /// Starts reading ahead the disk checkpoint that Acquire with the same
+  /// arguments would restore, when neither a RAM checkpoint nor a live state
+  /// serves the prompt about as well, so the later restore only uploads it.
+  /// Best effort; never throws.
+  void Prefetch(std::span<const TextRunnerToken> prompt,
+                const std::shared_ptr<const TextPromptContext>& context,
+                bool reuse_prompt, std::size_t cache_prefix_tokens) noexcept;
+
+private:
+  std::vector<TextRunnerPrefill> BeginPrefills(
+      std::span<Request* const> requests,
+      std::span<PrefillCompanion> prefills) const;
+  static void FinishPrefills(std::span<PrefillCompanion> prefills,
+                             std::span<TextRunnerPrefill> chunks);
+
+  struct Impl;
+  std::unique_ptr<Impl> impl_;
+};
+
+}  // namespace gufo::server
+
+#endif  // GUFO_SERVER_TEXT_MODEL_RUNNER_HPP_

@@ -1,0 +1,60 @@
+batch C6 AR_logits_state_exact=1 MTP_greedy_tokens_agree=1 worst_frontier_kl=0.029682
+batch C8 AR_logits_state_exact=1 MTP_greedy_tokens_agree=1 worst_frontier_kl=0.078238
+batch sampled_accepted=20 rejected_cycles=13 deferred_residual_exact=1
+wide batch C32 AR worst_frontier_kl=0.072275
+wide batch C32 MTP cycle 0 committed=64 worst_frontier_kl=0.210419
+wide batch C32 MTP cycle 1 committed=44 worst_frontier_kl=0.031422
+wide_batch_teacher_forced_greedy=1
+prefill_batch_prompt_only_exact=1
+mixed prompt 0 at 800: kl=0.000075 decode-fed kl=0.000025
+mixed prompt 1 at 700: kl=0.000637 decode-fed kl=0.000056
+mixed prompt 0 at 1200: kl=0.008296 decode-fed kl=0.011950
+mixed prompt 1 at 1100: kl=0.000030 decode-fed kl=0.000020
+prefill_batch_decoders_exact=1
+mixed prefill: position=2312 kl=0.000961 worst_decoder_kl=0.000000
+mixed prefill: position=2824 kl=0.000011 worst_decoder_kl=0.000000
+mixed prefill: position=3000 kl=0.000019 worst_decoder_kl=0.000000
+mixed_prefill_within_batch_contract=1 mtp_accepted ref=1 mixed=4
+adapter frontier kl vs base=0.084217
+adapter_batches_exact=1 adapter_snapshots_isolated=1
+depth=16 config=0 tokens=32 exact=1 drafted=35 accepted=18
+depth=16 config=1 tokens=32 exact=1 drafted=36 accepted=21
+depth=16 config=2 tokens=8 exact=1 drafted=7 accepted=4
+depth=16 config=3 tokens=8 exact=1 drafted=9 accepted=3
+depth=4096 config=0 tokens=32 exact=1 drafted=30 accepted=24
+depth=4096 config=1 tokens=32 exact=1 drafted=26 accepted=26
+depth=4096 config=2 tokens=8 exact=1 drafted=6 accepted=6
+depth=4096 config=3 tokens=8 exact=1 drafted=6 accepted=6
+fresh_load depth=4096 config=1 mtp=0 tokens=32 bitwise_exact=1
+fresh_load depth=4096 config=1 mtp=1 tokens=32 bitwise_exact=1
+fresh_load depth=4096 config=0 mtp=0 tokens=32 bitwise_exact=1
+fresh_load depth=4096 config=0 mtp=1 tokens=32 bitwise_exact=1
+fresh_load depth=16 config=1 mtp=0 tokens=32 bitwise_exact=1
+fresh_load depth=16 config=1 mtp=1 tokens=32 bitwise_exact=1
+fresh_load depth=16 config=0 mtp=0 tokens=32 bitwise_exact=1
+fresh_load depth=16 config=0 mtp=1 tokens=32 bitwise_exact=1
+serving sampling=greedy replay_exact=1
+serving sampling=temperature-cold replay_exact=1
+serving sampling=temperature replay_exact=1
+serving sampling=temperature-hot replay_exact=1
+serving sampling=top-k-one replay_exact=1
+serving sampling=top-k replay_exact=1
+serving sampling=top-p replay_exact=1
+serving sampling=min-p replay_exact=1
+serving sampling=min-p-one replay_exact=1
+serving sampling=top-k-floor replay_exact=1
+serving sampling=top-p-floor replay_exact=1
+serving sampling=min-p-floor replay_exact=1
+serving sampling=repeat-penalty replay_exact=1
+serving sampling=repeat-reward replay_exact=1
+serving sampling=frequency-penalty replay_exact=1
+serving sampling=frequency-reward replay_exact=1
+serving sampling=presence-penalty replay_exact=1
+serving sampling=presence-reward replay_exact=1
+serving sampling=history-one replay_exact=1
+serving sampling=history-disabled replay_exact=1
+serving sampling=greedy-penalties replay_exact=1
+serving sampling=all-filters replay_exact=1
+serving sampling=all-floors replay_exact=1
+serving strategies=23 mtp=0 batched_requests=24 C2_and_budgets_exact=1
+serving strategies=23 mtp=1 batched_requests=24 C2_and_budgets_exact=1

@@ -1,0 +1,51 @@
+peer snapshot bytes, graph capture and replay logits exact
+execution_modes=independent AR_predictor_bytes=0 mixed_batch_exact=1
+prefill chunks: length=136 boundary=94 four logit rows exact
+prefill chunks: length=136 boundary=103 four logit rows exact
+prefill chunks: length=136 boundary=104 four logit rows exact
+prefill chunks: length=136 boundary=127 four logit rows exact
+prefill chunks: length=136 boundary=128 four logit rows exact
+prefill chunks: length=136 boundary=135 four logit rows exact
+prefill chunks: length=2048 boundary=1025 four logit rows exact
+prefill chunks: length=4096 boundary=2048 four logit rows exact
+cancelled forward/restore recover exactly; rollback starts empty
+rollback restore is bounded, reuses warm rows and replays exactly
+image snapshot attachment: matching vision sidecar unavailable
+batch preparation and mid-execution cancellation isolate peers and sampling replay
+KV pages commit lazily, reset releases them, pool pressure pages idle sessions out and back exactly, exhaustion fails only the session that cannot fit
+restores map live prefix pages, decode exactly and outlive the holder
+batch C2 AR_logits_state_exact=1 MTP_greedy_tokens_agree=1 worst_frontier_kl=0.000000
+batch C4 AR_logits_state_exact=1 MTP_greedy_tokens_agree=1 worst_frontier_kl=0.000000
+batch C6 AR_logits_state_exact=1 MTP_greedy_tokens_agree=1 worst_frontier_kl=0.029682
+batch C8 AR_logits_state_exact=1 MTP_greedy_tokens_agree=1 worst_frontier_kl=0.078238
+batch sampled_accepted=20 rejected_cycles=13 deferred_residual_exact=1
+wide batch C32 AR worst_frontier_kl=0.072275
+wide batch C32 MTP cycle 0 committed=64 worst_frontier_kl=0.210419
+wide batch C32 MTP cycle 1 committed=63 worst_frontier_kl=0.059154
+wide_batch_teacher_forced_greedy=1
+prefill_batch_prompt_only_exact=1
+mixed prompt 0 at 800: kl=0.000075 decode-fed kl=0.000025
+mixed prompt 1 at 700: kl=0.000637 decode-fed kl=0.000056
+mixed prompt 0 at 1200: kl=0.008296 decode-fed kl=0.011950
+mixed prompt 1 at 1100: kl=0.000030 decode-fed kl=0.000020
+prefill_batch_decoders_exact=1
+mixed prefill: position=2312 kl=0.000961 worst_decoder_kl=0.020430
+mixed prefill: position=2824 kl=0.000011 worst_decoder_kl=0.020430
+mixed prefill: position=3000 kl=0.000019 worst_decoder_kl=0.020430
+mixed_prefill_within_batch_contract=1 mtp_accepted ref=1 mixed=4
+adapter frontier kl vs base=0.084217
+adapter_batches_exact=1 adapter_snapshots_isolated=1
+frontier depth=16 config=0 tokens=3 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=4 width=1 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=5 width=1 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=8 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=9 width=1 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=12 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=14 width=2 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=17 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=21 width=4 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=23 width=2 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=25 width=2 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=29 width=4 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=32 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+FAIL: interleaving changed MTP proposals or acceptance: tokens equal, widths isolated [4 1 4 4 2 4 2 3 1 3 3 1 ] interleaved [3 1 1 3 1 3 2 3 4 2 2 4 3 ], drafted first 35 replay 32, accepted first 19 replay 20

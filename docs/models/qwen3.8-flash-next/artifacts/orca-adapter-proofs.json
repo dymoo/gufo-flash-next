@@ -1,0 +1,880 @@
+{
+ "date": "2026-10-26",
+ "window": "results/20261026T051755Z (<work>/campaign/orca-adapter)",
+ "logit_equivalence": {
+  "prompt_tokens": 41,
+  "gpu": "gpu_probe with Executor::Pin (df77bd3), batch 64, context 256, UD-Q4_K_XL",
+  "oracle": "reference_probe float32 on dequantized weights; base, Orca folded into every writer, Orca folded into block outputs only",
+  "kl": {
+   "gpu_probe_orca": {
+    "base vs gpu-base": {
+     "positions": 41,
+     "of_prompt": 41,
+     "kl_mean": 0.0051054743756675895,
+     "kl_max": 0.029071838424856295,
+     "kl_last": 0.014035664086516589,
+     "argmax_agree": 40,
+     "argmax_last": true
+    },
+    "base vs gpu-orca": {
+     "positions": 41,
+     "of_prompt": 41,
+     "kl_mean": 0.3157736010479095,
+     "kl_max": 3.420744881612759,
+     "kl_last": 1.4241332690447335,
+     "argmax_agree": 33,
+     "argmax_last": false
+    },
+    "orca vs gpu-base": {
+     "positions": 41,
+     "of_prompt": 41,
+     "kl_mean": 0.30301721714677154,
+     "kl_max": 3.4892209908065936,
+     "kl_last": 0.7567811572309399,
+     "argmax_agree": 30,
+     "argmax_last": false
+    },
+    "orca vs gpu-orca": {
+     "positions": 41,
+     "of_prompt": 41,
+     "kl_mean": 0.009699476108407167,
+     "kl_max": 0.0876197738496586,
+     "kl_last": 0.0026321791950393394,
+     "argmax_agree": 37,
+     "argmax_last": true
+    },
+    "blocks vs gpu-base": {
+     "positions": 41,
+     "of_prompt": 41,
+     "kl_mean": 0.321540817826046,
+     "kl_max": 3.690338199177389,
+     "kl_last": 0.8212939563617156,
+     "argmax_agree": 31,
+     "argmax_last": false
+    },
+    "blocks vs gpu-orca": {
+     "positions": 41,
+     "of_prompt": 41,
+     "kl_mean": 0.01231498115574248,
+     "kl_max": 0.1570118866496247,
+     "kl_last": 0.0005725365931093138,
+     "argmax_agree": 38,
+     "argmax_last": true
+    }
+   },
+   "gpu_probe_orca_blocks": {
+    "base vs gpu-base": {
+     "positions": 41,
+     "of_prompt": 41,
+     "kl_mean": 0.0051054743756675895,
+     "kl_max": 0.029071838424856295,
+     "kl_last": 0.014035664086516589,
+     "argmax_agree": 40,
+     "argmax_last": true
+    },
+    "base vs gpu-blocks": {
+     "positions": 41,
+     "of_prompt": 41,
+     "kl_mean": 0.34721749553828724,
+     "kl_max": 3.543464136140922,
+     "kl_last": 1.5055390204992682,
+     "argmax_agree": 31,
+     "argmax_last": false
+    },
+    "orca vs gpu-base": {
+     "positions": 41,
+     "of_prompt": 41,
+     "kl_mean": 0.30301721714677154,
+     "kl_max": 3.4892209908065936,
+     "kl_last": 0.7567811572309399,
+     "argmax_agree": 30,
+     "argmax_last": false
+    },
+    "orca vs gpu-blocks": {
+     "positions": 41,
+     "of_prompt": 41,
+     "kl_mean": 0.007463826108566086,
+     "kl_max": 0.12107111842149143,
+     "kl_last": 0.00450078436643465,
+     "argmax_agree": 40,
+     "argmax_last": true
+    },
+    "blocks vs gpu-base": {
+     "positions": 41,
+     "of_prompt": 41,
+     "kl_mean": 0.321540817826046,
+     "kl_max": 3.690338199177389,
+     "kl_last": 0.8212939563617156,
+     "argmax_agree": 31,
+     "argmax_last": false
+    },
+    "blocks vs gpu-blocks": {
+     "positions": 41,
+     "of_prompt": 41,
+     "kl_mean": 0.00572055943163437,
+     "kl_max": 0.061792754465603936,
+     "kl_last": 0.00028150994646736346,
+     "argmax_agree": 41,
+     "argmax_last": true
+    }
+   }
+  },
+  "gpu_base_rows_bit_identical_across_the_two_probe_processes": true,
+  "paired_per_position": {
+   "orca_minus_base_kl_mean": 0.00459,
+   "bootstrap95": [
+    -0.00079,
+    0.0112
+   ],
+   "blocks_minus_base_kl_mean": 0.00062,
+   "bootstrap95_blocks": [
+    -0.00222,
+    0.00378
+   ],
+   "excluding_positions_15_16_mean_kl": {
+    "orca": 0.00579,
+    "base": 0.00514,
+    "blocks": 0.00546
+   },
+   "median_orca_over_base_ratio": 1.02
+  },
+  "top1_mismatches_orca": {
+   "positions": [
+    16,
+    17,
+    21,
+    29
+   ],
+   "oracle_top1_top2_logit_gaps": [
+    0.0,
+    0.237,
+    0.275,
+    0.062
+   ]
+  },
+  "logit_shift_orca_minus_base": {
+   "cosine_gpu_vs_oracle_mean": 0.939,
+   "relative_error_mean": 0.3245,
+   "gpu_base_vs_oracle_base_noise_relative": 0.2073
+  }
+ },
+ "cache_isolation": {
+  "ids": [
+   "base",
+   "huihui",
+   "orca",
+   "orca-blocks"
+  ],
+  "seed_log": [
+   {
+    "label": "ram base owner",
+    "model": "base",
+    "expect": "miss",
+    "prompt_tokens": 1419,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram base by huihui",
+    "model": "huihui",
+    "expect": "miss",
+    "prompt_tokens": 1419,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram base by orca",
+    "model": "orca",
+    "expect": "miss",
+    "prompt_tokens": 1419,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram base by orca-blocks",
+    "model": "orca-blocks",
+    "expect": "miss",
+    "prompt_tokens": 1419,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram base repeat base",
+    "model": "base",
+    "expect": "hit",
+    "prompt_tokens": 1419,
+    "cached_tokens": 1419,
+    "cache_restore_bytes": 136610700,
+    "ok": true
+   },
+   {
+    "label": "ram base repeat huihui",
+    "model": "huihui",
+    "expect": "hit",
+    "prompt_tokens": 1419,
+    "cached_tokens": 1419,
+    "cache_restore_bytes": 136610700,
+    "ok": true
+   },
+   {
+    "label": "ram base repeat orca",
+    "model": "orca",
+    "expect": "hit",
+    "prompt_tokens": 1419,
+    "cached_tokens": 1419,
+    "cache_restore_bytes": 136610700,
+    "ok": true
+   },
+   {
+    "label": "ram base repeat orca-blocks",
+    "model": "orca-blocks",
+    "expect": "hit",
+    "prompt_tokens": 1419,
+    "cached_tokens": 1419,
+    "cache_restore_bytes": 136610700,
+    "ok": true
+   },
+   {
+    "label": "ram huihui owner",
+    "model": "huihui",
+    "expect": "miss",
+    "prompt_tokens": 1404,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram huihui by base",
+    "model": "base",
+    "expect": "miss",
+    "prompt_tokens": 1404,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram huihui by orca",
+    "model": "orca",
+    "expect": "miss",
+    "prompt_tokens": 1404,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram huihui by orca-blocks",
+    "model": "orca-blocks",
+    "expect": "miss",
+    "prompt_tokens": 1404,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram huihui repeat base",
+    "model": "base",
+    "expect": "hit",
+    "prompt_tokens": 1404,
+    "cached_tokens": 1404,
+    "cache_restore_bytes": 136424880,
+    "ok": true
+   },
+   {
+    "label": "ram huihui repeat huihui",
+    "model": "huihui",
+    "expect": "hit",
+    "prompt_tokens": 1404,
+    "cached_tokens": 1404,
+    "cache_restore_bytes": 136424880,
+    "ok": true
+   },
+   {
+    "label": "ram huihui repeat orca",
+    "model": "orca",
+    "expect": "hit",
+    "prompt_tokens": 1404,
+    "cached_tokens": 1404,
+    "cache_restore_bytes": 136424880,
+    "ok": true
+   },
+   {
+    "label": "ram huihui repeat orca-blocks",
+    "model": "orca-blocks",
+    "expect": "hit",
+    "prompt_tokens": 1404,
+    "cached_tokens": 1404,
+    "cache_restore_bytes": 136424880,
+    "ok": true
+   },
+   {
+    "label": "ram orca owner",
+    "model": "orca",
+    "expect": "miss",
+    "prompt_tokens": 1407,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram orca by base",
+    "model": "base",
+    "expect": "miss",
+    "prompt_tokens": 1407,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram orca by huihui",
+    "model": "huihui",
+    "expect": "miss",
+    "prompt_tokens": 1407,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram orca by orca-blocks",
+    "model": "orca-blocks",
+    "expect": "miss",
+    "prompt_tokens": 1407,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram orca repeat base",
+    "model": "base",
+    "expect": "hit",
+    "prompt_tokens": 1407,
+    "cached_tokens": 1407,
+    "cache_restore_bytes": 136462044,
+    "ok": true
+   },
+   {
+    "label": "ram orca repeat huihui",
+    "model": "huihui",
+    "expect": "hit",
+    "prompt_tokens": 1407,
+    "cached_tokens": 1407,
+    "cache_restore_bytes": 136462044,
+    "ok": true
+   },
+   {
+    "label": "ram orca repeat orca",
+    "model": "orca",
+    "expect": "hit",
+    "prompt_tokens": 1407,
+    "cached_tokens": 1407,
+    "cache_restore_bytes": 136462044,
+    "ok": true
+   },
+   {
+    "label": "ram orca repeat orca-blocks",
+    "model": "orca-blocks",
+    "expect": "hit",
+    "prompt_tokens": 1407,
+    "cached_tokens": 1407,
+    "cache_restore_bytes": 136462044,
+    "ok": true
+   },
+   {
+    "label": "ram orca-blocks owner",
+    "model": "orca-blocks",
+    "expect": "miss",
+    "prompt_tokens": 1430,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram orca-blocks by base",
+    "model": "base",
+    "expect": "miss",
+    "prompt_tokens": 1430,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram orca-blocks by huihui",
+    "model": "huihui",
+    "expect": "miss",
+    "prompt_tokens": 1430,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram orca-blocks by orca",
+    "model": "orca",
+    "expect": "miss",
+    "prompt_tokens": 1430,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "ram orca-blocks repeat base",
+    "model": "base",
+    "expect": "hit",
+    "prompt_tokens": 1430,
+    "cached_tokens": 1430,
+    "cache_restore_bytes": 136746968,
+    "ok": true
+   },
+   {
+    "label": "ram orca-blocks repeat huihui",
+    "model": "huihui",
+    "expect": "hit",
+    "prompt_tokens": 1430,
+    "cached_tokens": 1430,
+    "cache_restore_bytes": 136746968,
+    "ok": true
+   },
+   {
+    "label": "ram orca-blocks repeat orca",
+    "model": "orca",
+    "expect": "hit",
+    "prompt_tokens": 1430,
+    "cached_tokens": 1430,
+    "cache_restore_bytes": 136746968,
+    "ok": true
+   },
+   {
+    "label": "ram orca-blocks repeat orca-blocks",
+    "model": "orca-blocks",
+    "expect": "hit",
+    "prompt_tokens": 1430,
+    "cached_tokens": 1430,
+    "cache_restore_bytes": 136746968,
+    "ok": true
+   },
+   {
+    "label": "disk base owner",
+    "model": "base",
+    "expect": "miss",
+    "prompt_tokens": 1437,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk huihui owner",
+    "model": "huihui",
+    "expect": "miss",
+    "prompt_tokens": 1436,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk orca owner",
+    "model": "orca",
+    "expect": "miss",
+    "prompt_tokens": 1405,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk orca-blocks owner",
+    "model": "orca-blocks",
+    "expect": "miss",
+    "prompt_tokens": 1405,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "system huihui conv0",
+    "model": "huihui",
+    "expect": "miss",
+    "prompt_tokens": 911,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "system huihui conv1",
+    "model": "huihui",
+    "expect": "any",
+    "prompt_tokens": 912,
+    "cached_tokens": 828,
+    "cache_restore_bytes": 129289392,
+    "ok": true
+   },
+   {
+    "label": "system huihui conv2",
+    "model": "huihui",
+    "expect": "any",
+    "prompt_tokens": 918,
+    "cached_tokens": 828,
+    "cache_restore_bytes": 129289392,
+    "ok": true
+   },
+   {
+    "label": "system orca conv0",
+    "model": "orca",
+    "expect": "miss",
+    "prompt_tokens": 898,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "system orca conv1",
+    "model": "orca",
+    "expect": "any",
+    "prompt_tokens": 894,
+    "cached_tokens": 811,
+    "cache_restore_bytes": 129078796,
+    "ok": true
+   },
+   {
+    "label": "system orca conv2",
+    "model": "orca",
+    "expect": "any",
+    "prompt_tokens": 898,
+    "cached_tokens": 811,
+    "cache_restore_bytes": 129078796,
+    "ok": true
+   },
+   {
+    "label": "system orca-blocks conv0",
+    "model": "orca-blocks",
+    "expect": "miss",
+    "prompt_tokens": 899,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "system orca-blocks conv1",
+    "model": "orca-blocks",
+    "expect": "any",
+    "prompt_tokens": 901,
+    "cached_tokens": 815,
+    "cache_restore_bytes": 129128348,
+    "ok": true
+   },
+   {
+    "label": "system orca-blocks conv2",
+    "model": "orca-blocks",
+    "expect": "any",
+    "prompt_tokens": 900,
+    "cached_tokens": 815,
+    "cache_restore_bytes": 129128348,
+    "ok": true
+   }
+  ],
+  "probe_log": [
+   {
+    "label": "disk base by huihui",
+    "model": "huihui",
+    "expect": "miss",
+    "prompt_tokens": 1437,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk base by orca",
+    "model": "orca",
+    "expect": "miss",
+    "prompt_tokens": 1437,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk base by orca-blocks",
+    "model": "orca-blocks",
+    "expect": "miss",
+    "prompt_tokens": 1437,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk base owner",
+    "model": "base",
+    "expect": "hit",
+    "prompt_tokens": 1437,
+    "cached_tokens": 1437,
+    "cache_restore_bytes": 136840017,
+    "ok": true
+   },
+   {
+    "label": "disk huihui by base",
+    "model": "base",
+    "expect": "miss",
+    "prompt_tokens": 1436,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk huihui by orca",
+    "model": "orca",
+    "expect": "miss",
+    "prompt_tokens": 1436,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk huihui by orca-blocks",
+    "model": "orca-blocks",
+    "expect": "miss",
+    "prompt_tokens": 1436,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk huihui owner",
+    "model": "huihui",
+    "expect": "hit",
+    "prompt_tokens": 1436,
+    "cached_tokens": 1436,
+    "cache_restore_bytes": 136827716,
+    "ok": true
+   },
+   {
+    "label": "disk orca by base",
+    "model": "base",
+    "expect": "miss",
+    "prompt_tokens": 1405,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk orca by huihui",
+    "model": "huihui",
+    "expect": "miss",
+    "prompt_tokens": 1405,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk orca by orca-blocks",
+    "model": "orca-blocks",
+    "expect": "miss",
+    "prompt_tokens": 1405,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk orca owner",
+    "model": "orca",
+    "expect": "hit",
+    "prompt_tokens": 1405,
+    "cached_tokens": 1405,
+    "cache_restore_bytes": 136443562,
+    "ok": true
+   },
+   {
+    "label": "disk orca-blocks by base",
+    "model": "base",
+    "expect": "miss",
+    "prompt_tokens": 1405,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk orca-blocks by huihui",
+    "model": "huihui",
+    "expect": "miss",
+    "prompt_tokens": 1405,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk orca-blocks by orca",
+    "model": "orca",
+    "expect": "miss",
+    "prompt_tokens": 1405,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "disk orca-blocks owner",
+    "model": "orca-blocks",
+    "expect": "hit",
+    "prompt_tokens": 1405,
+    "cached_tokens": 1405,
+    "cache_restore_bytes": 136443569,
+    "ok": true
+   },
+   {
+    "label": "system huihui by base",
+    "model": "base",
+    "expect": "miss",
+    "prompt_tokens": 914,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "system huihui by orca",
+    "model": "orca",
+    "expect": "miss",
+    "prompt_tokens": 912,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "system huihui by orca-blocks",
+    "model": "orca-blocks",
+    "expect": "miss",
+    "prompt_tokens": 913,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "system huihui owner",
+    "model": "huihui",
+    "expect": "hit",
+    "prompt_tokens": 914,
+    "cached_tokens": 828,
+    "cache_restore_bytes": 129293380,
+    "ok": true
+   },
+   {
+    "label": "system orca by base",
+    "model": "base",
+    "expect": "miss",
+    "prompt_tokens": 897,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "system orca by huihui",
+    "model": "huihui",
+    "expect": "miss",
+    "prompt_tokens": 898,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "system orca by orca-blocks",
+    "model": "orca-blocks",
+    "expect": "miss",
+    "prompt_tokens": 898,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "system orca owner",
+    "model": "orca",
+    "expect": "hit",
+    "prompt_tokens": 899,
+    "cached_tokens": 811,
+    "cache_restore_bytes": 129082714,
+    "ok": true
+   },
+   {
+    "label": "system orca-blocks by base",
+    "model": "base",
+    "expect": "miss",
+    "prompt_tokens": 900,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "system orca-blocks by huihui",
+    "model": "huihui",
+    "expect": "miss",
+    "prompt_tokens": 901,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "system orca-blocks by orca",
+    "model": "orca",
+    "expect": "miss",
+    "prompt_tokens": 900,
+    "cached_tokens": 0,
+    "cache_restore_bytes": 0,
+    "ok": true
+   },
+   {
+    "label": "system orca-blocks owner",
+    "model": "orca-blocks",
+    "expect": "hit",
+    "prompt_tokens": 901,
+    "cached_tokens": 815,
+    "cache_restore_bytes": 129132289,
+    "ok": true
+   }
+  ],
+  "server": "production AR flags (--sessions 24 --kv-cache tq4 --host-memory-budget 8 GiB --flex-sessions 2 --cache-disk fresh dir --cache-disk-bytes 8 GiB) at --context 16384; seed server, then restart on the same directory"
+ },
+ "mtp_acceptance": {
+  "tokens": 192,
+  "summary": {
+   "base": {
+    "prompts": 24,
+    "drafted": 2961,
+    "accepted": 1948,
+    "acceptance": 0.6578858493752111,
+    "decode_tps_median": 37.314091397688244,
+    "completion_tokens": 3987
+   },
+   "huihui": {
+    "prompts": 24,
+    "drafted": 2990,
+    "accepted": 1936,
+    "acceptance": 0.6474916387959866,
+    "decode_tps_median": 36.35813461798182,
+    "completion_tokens": 4110
+   },
+   "orca": {
+    "prompts": 24,
+    "drafted": 3002,
+    "accepted": 1972,
+    "acceptance": 0.6568954030646236,
+    "decode_tps_median": 37.45313761175232,
+    "completion_tokens": 4007
+   },
+   "orca-nomtp": {
+    "prompts": 24,
+    "drafted": 2976,
+    "accepted": 1952,
+    "acceptance": 0.6559139784946236,
+    "decode_tps_median": 37.61251201275508,
+    "completion_tokens": 4007
+   },
+   "pair": {
+    "pair": "orca - orca-nomtp",
+    "prompts": 24,
+    "mean_diff": -0.004514613784741842,
+    "median_diff": -0.006522533468632075,
+    "ci95": [
+     -0.027796578921672702,
+     0.019933766510604686
+    ],
+    "a_better": 10,
+    "b_better": 13
+   }
+  }
+ }
+}

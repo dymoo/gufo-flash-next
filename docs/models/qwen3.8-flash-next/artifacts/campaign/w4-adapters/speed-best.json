@@ -1,0 +1,126 @@
+{
+ "samples": {
+  "base": [
+   {
+    "prefill_tokens": 479,
+    "prefill_tps": 1166.6879378153283,
+    "completion_tokens": 128,
+    "decode_tps": 34.127808745867966,
+    "draft_tokens": 0,
+    "draft_accepted": 0
+   },
+   {
+    "prefill_tokens": 489,
+    "prefill_tps": 1174.8684989390408,
+    "completion_tokens": 128,
+    "decode_tps": 34.984519469963395,
+    "draft_tokens": 0,
+    "draft_accepted": 0
+   },
+   {
+    "prefill_tokens": 480,
+    "prefill_tps": 1162.972462832745,
+    "completion_tokens": 128,
+    "decode_tps": 34.29021535592561,
+    "draft_tokens": 0,
+    "draft_accepted": 0
+   }
+  ],
+  "huihui": [
+   {
+    "prefill_tokens": 482,
+    "prefill_tps": 1193.9876518936533,
+    "completion_tokens": 128,
+    "decode_tps": 33.88948534279318,
+    "draft_tokens": 0,
+    "draft_accepted": 0
+   },
+   {
+    "prefill_tokens": 474,
+    "prefill_tps": 1161.8757703846097,
+    "completion_tokens": 128,
+    "decode_tps": 33.452477149137046,
+    "draft_tokens": 0,
+    "draft_accepted": 0
+   },
+   {
+    "prefill_tokens": 477,
+    "prefill_tps": 1154.0740346138643,
+    "completion_tokens": 128,
+    "decode_tps": 33.06851349936671,
+    "draft_tokens": 0,
+    "draft_accepted": 0
+   }
+  ],
+  "orca": [
+   {
+    "prefill_tokens": 479,
+    "prefill_tps": 1187.1224603609153,
+    "completion_tokens": 128,
+    "decode_tps": 33.82979807765755,
+    "draft_tokens": 0,
+    "draft_accepted": 0
+   },
+   {
+    "prefill_tokens": 482,
+    "prefill_tps": 1167.7025557115796,
+    "completion_tokens": 128,
+    "decode_tps": 33.568835126110386,
+    "draft_tokens": 0,
+    "draft_accepted": 0
+   },
+   {
+    "prefill_tokens": 481,
+    "prefill_tps": 1190.9649064214427,
+    "completion_tokens": 128,
+    "decode_tps": 32.898457338257494,
+    "draft_tokens": 0,
+    "draft_accepted": 0
+   }
+  ]
+ },
+ "summary": {
+  "base": {
+   "prefill_tps": {
+    "median": 1166.6879378153283,
+    "min": 1162.972462832745,
+    "max": 1174.8684989390408
+   },
+   "decode_tps": {
+    "median": 34.29021535592561,
+    "min": 34.127808745867966,
+    "max": 34.984519469963395
+   },
+   "prefill_tokens": 480,
+   "completion_tokens": 128
+  },
+  "huihui": {
+   "prefill_tps": {
+    "median": 1161.8757703846097,
+    "min": 1154.0740346138643,
+    "max": 1193.9876518936533
+   },
+   "decode_tps": {
+    "median": 33.452477149137046,
+    "min": 33.06851349936671,
+    "max": 33.88948534279318
+   },
+   "prefill_tokens": 477,
+   "completion_tokens": 128
+  },
+  "orca": {
+   "prefill_tps": {
+    "median": 1187.1224603609153,
+    "min": 1167.7025557115796,
+    "max": 1190.9649064214427
+   },
+   "decode_tps": {
+    "median": 33.568835126110386,
+    "min": 32.898457338257494,
+    "max": 33.82979807765755
+   },
+   "prefill_tokens": 481,
+   "completion_tokens": 128
+  }
+ }
+}

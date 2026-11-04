@@ -1,0 +1,11 @@
+[Model Load]: 13.2163 s
+| model                            |       size | backend    |               test |                   t/s |
+| -------------------------------- | ---------- | ---------- | ------------------ | --------------------- |
+| Qwen3.8 Flash Next               | 103.69 GiB | ROCm (HIP) |              pp512 |       1195.13 ± 5.14 |
+| Qwen3.8 Flash Next               | 103.69 GiB | ROCm (HIP) |              pp512 |       1186.82 ± 4.03 |
+| Qwen3.8 Flash Next               | 103.69 GiB | ROCm (HIP) |             pp2048 |       1600.81 ± 5.11 |
+| Qwen3.8 Flash Next               | 103.69 GiB | ROCm (HIP) |             pp2048 |       1595.62 ± 2.63 |
+| Qwen3.8 Flash Next               | 103.69 GiB | ROCm (HIP) |             pp8192 |       1496.86 ± 6.69 |
+| Qwen3.8 Flash Next               | 103.69 GiB | ROCm (HIP) |             pp8192 |       1494.33 ± 1.49 |
+| Qwen3.8 Flash Next               | 103.69 GiB | ROCm (HIP) |              tg128 |         25.57 ± 0.07 |
+

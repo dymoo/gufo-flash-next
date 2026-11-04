@@ -1,0 +1,171 @@
+{
+ "direction_sha256": "178edb39a5fcad95084586a90ea9b75df73cac6886d27fca2fe022b9cb957b68",
+ "gguf": "https://huggingface.co/vmlinux/Qwen3.8-Flash-Next-Uncensored-Gufo-Q4Mix-GGUF/resolve/0a0843cce72b4d8c377096960b3f0f9c0f4d197f/Qwen3.8-Flash-Next-Uncensored-Gufo-Q4Mix.gguf",
+ "mtp_gguf": "https://huggingface.co/jcbtc/Qwen3.8-Flash-CIRU-STRIX-Orca/resolve/139c9f5eb561dafbcf7cfab0622661b6fc0137e7/mtp/Qwen3.8-Flash-CIRU-STRIX-Orca-MTP-Q8_0.gguf",
+ "base": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next/resolve/de4b8e4d43b917e7706784d8bb445c9af86a3540/",
+ "results": {
+  "attn o_proj L3": {
+   "strength": 0.9997181296348572,
+   "leakage": 0.010221723467111588,
+   "rank1_residual": 0.2793634831905365,
+   "rel_edit": 0.021143153309822083,
+   "cos_top_singular": 0.999992370314541,
+   "q8_code_match": 0.9918246587117513,
+   "q8_code_match_unedited": 0.5220131556193034,
+   "ggml_type": 8
+  },
+  "attn o_proj L47": {
+   "strength": 0.999627411365509,
+   "leakage": 0.01156321819871664,
+   "rank1_residual": 0.3106471300125122,
+   "rel_edit": 0.019177431240677834,
+   "cos_top_singular": 0.999989269492728,
+   "q8_code_match": 0.9922938028971354,
+   "q8_code_match_unedited": 0.5478816350301107,
+   "ggml_type": 8
+  },
+  "gdn out_proj L0": {
+   "strength": 0.9997327923774719,
+   "leakage": 0.011075960472226143,
+   "rank1_residual": 0.3166077136993408,
+   "rel_edit": 0.019713526591658592,
+   "cos_top_singular": 0.9999892684744283,
+   "q8_code_match": 0.992092514038086,
+   "q8_code_match_unedited": 0.5421932220458985,
+   "ggml_type": 8
+  },
+  "gdn out_proj L45": {
+   "strength": 0.9995697736740112,
+   "leakage": 0.01096720714122057,
+   "rank1_residual": 0.3193076550960541,
+   "rel_edit": 0.019291600212454796,
+   "cos_top_singular": 0.9999892575686582,
+   "q8_code_match": 0.9919663111368815,
+   "q8_code_match_unedited": 0.5450804392496745,
+   "ggml_type": 8
+  },
+  "shared down L0": {
+   "strength": 0.9993937611579895,
+   "leakage": 0.011276330798864365,
+   "rank1_residual": 0.33060145378112793,
+   "rel_edit": 0.019965028390288353,
+   "cos_top_singular": 0.9998955365137513,
+   "q8_code_match": 0.992413330078125,
+   "q8_code_match_unedited": 0.5471728515625,
+   "ggml_type": 8
+  },
+  "shared down L30": {
+   "strength": 0.9997201561927795,
+   "leakage": 0.012138373218476772,
+   "rank1_residual": 0.31851261854171753,
+   "rel_edit": 0.01861589401960373,
+   "cos_top_singular": 0.9999107421599882,
+   "q8_code_match": 0.99258056640625,
+   "q8_code_match_unedited": 0.574022216796875,
+   "ggml_type": 8
+  },
+  "routed down L0 e0": {
+   "strength": 0.9978351593017578,
+   "leakage": 0.03935060650110245,
+   "rank1_residual": 0.8948622345924377,
+   "rel_edit": 0.019202159717679024,
+   "cos_top_singular": 0.9969056704863248,
+   "ggml_type": 7
+  },
+  "routed down L10 e137": {
+   "strength": 0.9986321926116943,
+   "leakage": 0.03771724924445152,
+   "rank1_residual": 0.8786681890487671,
+   "rel_edit": 0.02074718289077282,
+   "cos_top_singular": 0.9972994431852755,
+   "ggml_type": 7
+  },
+  "routed down L30 e511": {
+   "strength": 0.9980446100234985,
+   "leakage": 0.03785933926701546,
+   "rank1_residual": 0.8817317485809326,
+   "rel_edit": 0.020358113572001457,
+   "cos_top_singular": 0.9974126339140634,
+   "ggml_type": 7
+  },
+  "ple value_proj L1": {
+   "strength": 0.9996753334999084,
+   "leakage": 0.010080070234835148,
+   "rank1_residual": 0.26844340562820435,
+   "rel_edit": 0.019942056387662888,
+   "cos_top_singular": 0.9999751913305314,
+   "q8_code_match": 0.9821885681152344,
+   "q8_code_match_unedited": 0.42520751953125,
+   "ggml_type": 8
+  },
+  "mtp routed down e0": {
+   "strength": 1.0002559423446655,
+   "leakage": 0.011838601902127266,
+   "rank1_residual": 0.2835586667060852,
+   "rel_edit": 0.0190153568983078,
+   "cos_top_singular": 0.9999330060529149,
+   "q8_code_match": 0.9921649169921875,
+   "q8_code_match_unedited": 0.5360308837890625,
+   "ggml_type": 8
+  },
+  "mtp routed down e255": {
+   "strength": 0.9997206330299377,
+   "leakage": 0.011059703305363655,
+   "rank1_residual": 0.29809704422950745,
+   "rel_edit": 0.01907418854534626,
+   "cos_top_singular": 0.9999257036858562,
+   "q8_code_match": 0.9921356201171875,
+   "q8_code_match_unedited": 0.5349029541015625,
+   "ggml_type": 8
+  },
+  "mtp shared down": {
+   "strength": 0.9991157650947571,
+   "leakage": 0.011405911296606064,
+   "rank1_residual": 0.33901697397232056,
+   "rel_edit": 0.01964961551129818,
+   "cos_top_singular": 0.9998922228931434,
+   "q8_code_match": 0.9922235107421875,
+   "q8_code_match_unedited": 0.5641436767578125,
+   "ggml_type": 8
+  },
+  "mtp o_proj": {
+   "strength": 0.9998308420181274,
+   "leakage": 0.011088980361819267,
+   "rank1_residual": 0.3073717951774597,
+   "rel_edit": 0.019548114389181137,
+   "cos_top_singular": 0.9999860940256932,
+   "q8_code_match": 0.9910830815633138,
+   "q8_code_match_unedited": 0.5238501866658528,
+   "ggml_type": 8
+  },
+  "embed rows 0+8192": {
+   "strength": 0.9995692372322083,
+   "leakage": 0.012268029153347015,
+   "rank1_residual": 0.31094685196876526,
+   "q8_code_match": 0.9929885864257812
+  },
+  "embed rows 120000+8192": {
+   "strength": 0.9995995163917542,
+   "leakage": 0.01219062227755785,
+   "rank1_residual": 0.3038739562034607,
+   "q8_code_match": 0.9925160884857178
+  },
+  "embed rows 240000+8192": {
+   "strength": 0.9995136857032776,
+   "leakage": 0.01172665972262621,
+   "rank1_residual": 0.2922317385673523,
+   "q8_code_match": 0.9924964904785156
+  },
+  "control router L0 (F32)": {
+   "rel_diff": 0.0
+  },
+  "control shared gate_proj L0": {
+   "rel_diff": 0.007130080834031105,
+   "q8_code_match_unedited": 1.0
+  },
+  "control lm_head rows 0+8192": {
+   "rel_diff": 0.0056409090757369995,
+   "q8_code_match_unedited": 1.0
+  }
+ }
+}

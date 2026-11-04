@@ -1,0 +1,4 @@
+serving sampling=all-filters replay_exact=1
+serving sampling=all-floors replay_exact=1
+serving strategies=23 mtp=0 batched_requests=24 C2_and_budgets_exact=1
+FAIL: interleaving changed serving sampling or acceptance: min-p mtp=1 tokens differ drafted 5/6 accepted 4/3 (serial/paired) plan batched-w2

@@ -1,0 +1,7 @@
+[Model Load]: 13.1678 s
+| model                            |       size | backend    |               test |                   t/s |
+| -------------------------------- | ---------- | ---------- | ------------------ | --------------------- |
+| Qwen3.8 Flash Next               | 103.69 GiB | ROCm (HIP) |    pp2048 @ d32768 |      1483.33 ± 28.77 |
+| Qwen3.8 Flash Next               | 103.69 GiB | ROCm (HIP) |    pp2048 @ d32768 |       1473.58 ± 0.91 |
+| Qwen3.8 Flash Next               | 103.69 GiB | ROCm (HIP) |     tg128 @ d32768 |         26.29 ± 0.06 |
+

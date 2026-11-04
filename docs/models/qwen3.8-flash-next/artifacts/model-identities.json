@@ -1,0 +1,39 @@
+{
+  "sha256": {
+    "Target UD-Q4_K_XL shard 1 of 4": "4448186216b3af4cc558bbce2c3213f01608f8f8b2e5267a9767971dd3ec8082",
+    "Target UD-Q4_K_XL shard 2 of 4": "3f342f1c1580473f1ee94ddd5b28206e8c07a70fa1a366f59d1d6c922919a6c9",
+    "Target UD-Q4_K_XL shard 3 of 4": "56758f40269cad5cd9b0d3d6fbae0f40f6d5be6de49e4ab392dbe83157d9cbd3",
+    "Target UD-Q4_K_XL shard 4 of 4": "753bda48b98ba4f1636134a90a967de1b2d3908a236c026e464777342e53510a",
+    "MTP shared Q8_0": "5ff54097406a905cf3a724c709124ceb0e3e10235ee862298969e91c96fa96e6"
+  },
+  "sources": {
+    "target": "unsloth/Qwen3.8-Flash-Next-GGUF, revision 38bb39ee97821de2c9009abb7e93950eec396e66, UD-Q4_K_XL (four shards)",
+    "mtp": "unsloth/Qwen3.8-Flash-Next-GGUF, same revision, mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf"
+  },
+  "benchmarks-2026-09-22": {
+    "reference": "llama.cpp b11069 from flake.nix (0.4.1-dev build 11069, commit 68d9053a), ROCm gfx1151",
+    "gufoArMemory": "revision 89d58eb7 (tree dirty only by docs/models/qwen3.8-flash-next), nix build, binary sha256 prefix 4b1e592acb7e4a56",
+    "referenceMtp": "llama-server-mtp, llama.cpp commit 6fcaa16f, pinned ROCm recipe in flake.nix",
+    "note": "Retained single-user AR, reference single-user MTP and memory measurements. Per-artifact source revisions and commands are authoritative."
+  },
+  "scope": "Current retained benchmark and qualification evidence; per-table dates and source revisions identify partial refreshes.",
+  "benchmarks-2026-09-23": {
+    "scope": "Gufo single-user MTP mixed/repetitive, matched pp2048 concurrency on both engines, C1/MTP loading at capacity 262144; reference single-user MTP mixed/repetitive at 65536/131072 (UTC measurement date)",
+    "gufo": {
+      "revision": "c650f786e08b07ab2476308cf20e7af59ab6f87f",
+      "build": "nix build; inference unchanged during measurement",
+      "binarySha256": "fc4e05dbd2419e18698d1e0653fb46fb06c8edf79d8e39dc614c0ff985f2e850"
+    },
+    "referenceAr": {
+      "revision": "68d9053afd4f4d0752ced6187585f862355a40be",
+      "build": "llama.cpp b11069, pinned Nix ROCm gfx1151 recipe",
+      "binarySha256": "81dee29e5fbc234bbb4ae90c022de9c9d8513d1cefa960550b0bb59d9fc5346f"
+    },
+    "referenceMtp": {
+      "revision": "6fcaa16f4b360649933a54d1f91ad40ed35c0e11",
+      "build": "pinned Nix ROCm gfx1151 recipe; archive fetch matches the declared source hash",
+      "binarySha256": "66a42853bde76ef09e0574298819559003ef7fa5a9aa55bdbe3c0e4c085a484f"
+    },
+    "measurement": "One measured sample per point. Concurrency uses the same synthetic pp2048 prompt generator as single-user d0. Every session completes prompt preparation before timed tg128; measured requests reuse the full prefix, allowing at most four final prompt tokens to be evaluated again. Rates sum individual server decode rates. Gufo outputs match independent fresh AR controls. Inference and weights are unchanged."
+  }
+}

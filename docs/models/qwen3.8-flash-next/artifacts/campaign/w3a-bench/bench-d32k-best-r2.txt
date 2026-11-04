@@ -1,0 +1,9 @@
+gguf: 253 tensors overridden from <models>/q4k-gptq2-h5.gguf (--gguf-decode-override)
+decode twins: 193 tensors from --gguf-decode-override, head with head twin
+[Model Load]: 13.9941 s
+| model                            |       size | backend    |               test |                   t/s |
+| -------------------------------- | ---------- | ---------- | ------------------ | --------------------- |
+| Qwen3.8 Flash Next               | 103.69 GiB | ROCm (HIP) |    pp2048 @ d32768 |       1623.46 ± 7.09 |
+| Qwen3.8 Flash Next               | 103.69 GiB | ROCm (HIP) |    pp2048 @ d32768 |       1624.76 ± 1.85 |
+| Qwen3.8 Flash Next               | 103.69 GiB | ROCm (HIP) |     tg128 @ d32768 |         33.47 ± 0.15 |
+

@@ -1,0 +1,1 @@
+server-best.log | span=689s reqs=198 | decode: avg=39 busy_avg=40 peak10s=87 peak60s=71 busy_frac=97% | prefill: avg=586 busy_avg=739 peak10s=2115 peak60s=852 busy_frac=79%

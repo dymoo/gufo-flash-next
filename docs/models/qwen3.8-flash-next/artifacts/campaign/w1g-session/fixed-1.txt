@@ -1,0 +1,136 @@
+peer snapshot bytes, graph capture and replay logits exact
+execution_modes=independent AR_predictor_bytes=0 mixed_batch_exact=1
+prefill chunks: length=136 boundary=94 four logit rows exact
+prefill chunks: length=136 boundary=103 four logit rows exact
+prefill chunks: length=136 boundary=104 four logit rows exact
+prefill chunks: length=136 boundary=127 four logit rows exact
+prefill chunks: length=136 boundary=128 four logit rows exact
+prefill chunks: length=136 boundary=135 four logit rows exact
+prefill chunks: length=2048 boundary=1025 four logit rows exact
+prefill chunks: length=4096 boundary=2048 four logit rows exact
+cancelled forward/restore recover exactly; rollback starts empty
+rollback restore is bounded, reuses warm rows and replays exactly
+image snapshot attachment: matching vision sidecar unavailable
+batch preparation and mid-execution cancellation isolate peers and sampling replay
+KV pages commit lazily, reset releases them, pool pressure pages idle sessions out and back exactly, exhaustion fails only the session that cannot fit
+restores map live prefix pages, decode exactly and outlive the holder
+batch C2 AR_logits_state_exact=1 MTP_greedy_tokens_agree=1 worst_frontier_kl=0.000000
+batch C4 AR_logits_state_exact=1 MTP_greedy_tokens_agree=1 worst_frontier_kl=0.000000
+batch C6 AR_logits_state_exact=1 MTP_greedy_tokens_agree=1 worst_frontier_kl=0.029682
+batch C8 AR_logits_state_exact=1 MTP_greedy_tokens_agree=1 worst_frontier_kl=0.049943
+batch sampled_accepted=20 rejected_cycles=13 deferred_residual_exact=1
+wide batch C32 AR worst_frontier_kl=0.072275
+wide batch C32 MTP cycle 0 committed=32 worst_frontier_kl=0.134316
+wide batch C32 MTP cycle 1 committed=32 worst_frontier_kl=0.073132
+wide_batch_teacher_forced_greedy=1
+prefill_batch_prompt_only_exact=1
+mixed prompt 0 at 800: kl=0.000075 decode-fed kl=0.000025
+mixed prompt 1 at 700: kl=0.000637 decode-fed kl=0.000056
+mixed prompt 0 at 1200: kl=0.008296 decode-fed kl=0.011950
+mixed prompt 1 at 1100: kl=0.000030 decode-fed kl=0.000020
+prefill_batch_decoders_exact=1
+mixed prefill: position=2312 kl=0.000961 worst_decoder_kl=0.000000
+mixed prefill: position=2824 kl=0.000011 worst_decoder_kl=0.000000
+mixed prefill: position=3000 kl=0.000019 worst_decoder_kl=0.000000
+mixed_prefill_within_batch_contract=1 mtp_accepted ref=1 mixed=4
+adapter frontier kl vs base=0.084217
+adapter_batches_exact=1 adapter_snapshots_isolated=1
+frontier depth=16 config=0 tokens=3 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=4 width=1 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=5 width=1 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=8 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=9 width=1 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=12 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=14 width=2 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=17 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=20 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=21 width=1 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=24 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=25 width=1 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=28 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=16 config=0 tokens=32 width=4 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+depth=16 config=0 tokens=32 exact=1 drafted=35 accepted=18
+frontier depth=16 config=1 tokens=2 width=2 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=585415316980522496
+frontier depth=16 config=1 tokens=5 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1206631074890568497
+frontier depth=16 config=1 tokens=6 width=1 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1035391956260523596
+frontier depth=16 config=1 tokens=8 width=2 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=13477404266289442085
+frontier depth=16 config=1 tokens=11 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=9300052135675326408
+frontier depth=16 config=1 tokens=13 width=2 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=340862277345022344
+frontier depth=16 config=1 tokens=16 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=16610512366814951206
+frontier depth=16 config=1 tokens=21 width=5 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=2017197920513298031
+frontier depth=16 config=1 tokens=26 width=5 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=18308681458350871095
+frontier depth=16 config=1 tokens=30 width=4 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=433450843269274865
+frontier depth=16 config=1 tokens=32 width=2 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=18353622830048033104
+depth=16 config=1 tokens=32 exact=1 drafted=36 accepted=21
+frontier depth=16 config=2 tokens=2 width=2 max_diff=0.00 rmse=0.00 ar_rng=73 mtp_rng=5692505686314125164
+frontier depth=16 config=2 tokens=5 width=3 max_diff=0.00 rmse=0.00 ar_rng=73 mtp_rng=10554406400854371488
+frontier depth=16 config=2 tokens=7 width=2 max_diff=0.00 rmse=0.00 ar_rng=73 mtp_rng=13231351893016602774
+frontier depth=16 config=2 tokens=8 width=1 max_diff=0.00 rmse=0.00 ar_rng=73 mtp_rng=13231351893016602774
+depth=16 config=2 tokens=8 exact=1 drafted=7 accepted=4
+frontier depth=16 config=3 tokens=1 width=1 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=2306758490171379329
+frontier depth=16 config=3 tokens=2 width=1 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=3609032897813531829
+frontier depth=16 config=3 tokens=5 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=15716741940523069913
+frontier depth=16 config=3 tokens=7 width=2 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=5031180881222563605
+frontier depth=16 config=3 tokens=8 width=1 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=5031180881222563605
+depth=16 config=3 tokens=8 exact=1 drafted=9 accepted=3
+frontier depth=4096 config=0 tokens=4 width=4 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=4096 config=0 tokens=10 width=6 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=4096 config=0 tokens=17 width=7 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=4096 config=0 tokens=24 width=7 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=4096 config=0 tokens=27 width=3 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=4096 config=0 tokens=29 width=2 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=4096 config=0 tokens=30 width=1 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+frontier depth=4096 config=0 tokens=32 width=2 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1
+depth=4096 config=0 tokens=32 exact=1 drafted=29 accepted=24
+frontier depth=4096 config=1 tokens=4 width=4 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=2306758490171379329
+frontier depth=4096 config=1 tokens=8 width=4 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=16793493092846982040
+frontier depth=4096 config=1 tokens=15 width=7 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=13477404266289442085
+frontier depth=4096 config=1 tokens=23 width=8 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=340862277345022344
+frontier depth=4096 config=1 tokens=31 width=8 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=16752287496792050790
+frontier depth=4096 config=1 tokens=32 width=1 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=2017197920513298031
+depth=4096 config=1 tokens=32 exact=1 drafted=26 accepted=26
+frontier depth=4096 config=2 tokens=4 width=4 max_diff=0.00 rmse=0.00 ar_rng=73 mtp_rng=73
+frontier depth=4096 config=2 tokens=8 width=4 max_diff=0.00 rmse=0.00 ar_rng=73 mtp_rng=2449473627
+depth=4096 config=2 tokens=8 exact=1 drafted=6 accepted=6
+frontier depth=4096 config=3 tokens=4 width=4 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=2306758490171379329
+frontier depth=4096 config=3 tokens=8 width=4 max_diff=0.00 rmse=0.00 ar_rng=1 mtp_rng=1206631074890568497
+depth=4096 config=3 tokens=8 exact=1 drafted=6 accepted=6
+fresh_load depth=4096 config=1 mtp=0 tokens=32 bitwise_exact=1
+fresh_load depth=4096 config=1 mtp=1 tokens=32 bitwise_exact=1
+fresh_load depth=4096 config=0 mtp=0 tokens=32 bitwise_exact=1
+fresh_load depth=4096 config=0 mtp=1 tokens=32 bitwise_exact=1
+fresh_load depth=16 config=1 mtp=0 tokens=32 bitwise_exact=1
+fresh_load depth=16 config=1 mtp=1 tokens=32 bitwise_exact=1
+fresh_load depth=16 config=0 mtp=0 tokens=32 bitwise_exact=1
+fresh_load depth=16 config=0 mtp=1 tokens=32 bitwise_exact=1
+2026-10-26 22:36:02 [INFO] [engine] event=kv_pool bytes=27565715416 full_session_bytes=298945556 full_sessions=92 fixed_session_bytes=20 sessions=2
+2026-10-26 22:36:03 [INFO] [engine] event=host_memory_budget bytes=31720660992 explicit=0 snapshots_bytes=15860330496 paging_bytes=7930165248 spill=off
+2026-10-26 22:36:03 [INFO] [loader] event=load_phase phase=sessions rss_mib=687 host_available_mib=38443
+2026-10-26 22:36:03 [INFO] [engine] event=kv_pool bytes=27565715416 full_session_bytes=468343060 full_sessions=58 fixed_session_bytes=20 sessions=2
+2026-10-26 22:36:03 [INFO] [engine] event=host_memory_budget bytes=31720673280 explicit=0 snapshots_bytes=15860336640 paging_bytes=7930168320 spill=off
+2026-10-26 22:36:03 [INFO] [loader] event=load_phase phase=sessions rss_mib=687 host_available_mib=38443
+serving sampling=greedy replay_exact=1
+serving sampling=temperature-cold replay_exact=1
+serving sampling=temperature replay_exact=1
+serving sampling=temperature-hot replay_exact=1
+serving sampling=top-k-one replay_exact=1
+serving sampling=top-k replay_exact=1
+serving sampling=top-p replay_exact=1
+serving sampling=min-p replay_exact=1
+serving sampling=min-p-one replay_exact=1
+serving sampling=top-k-floor replay_exact=1
+serving sampling=top-p-floor replay_exact=1
+serving sampling=min-p-floor replay_exact=1
+serving sampling=repeat-penalty replay_exact=1
+serving sampling=repeat-reward replay_exact=1
+serving sampling=frequency-penalty replay_exact=1
+serving sampling=frequency-reward replay_exact=1
+serving sampling=presence-penalty replay_exact=1
+serving sampling=presence-reward replay_exact=1
+serving sampling=history-one replay_exact=1
+serving sampling=history-disabled replay_exact=1
+serving sampling=greedy-penalties replay_exact=1
+serving sampling=all-filters replay_exact=1
+serving sampling=all-floors replay_exact=1
+serving strategies=23 mtp=0 batched_requests=24 C2_and_budgets_exact=1
+FAIL: interleaving changed serving sampling or acceptance: top-p mtp=1 tokens differ drafted 5/5 accepted 4/4 (serial/paired) plan batched-w2

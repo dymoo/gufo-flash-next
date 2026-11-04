@@ -1,0 +1,6 @@
+[Model Load]: 13.1856 s
+[Prefill Validation] tokens=2048 finite=1 scalar_winner_rank=1 rmse=0.29 cosine=1.00 max_error=1.79
+| model                            |       size | backend    |               test |                   t/s |
+| -------------------------------- | ---------- | ---------- | ------------------ | --------------------- |
+| Qwen3.8 Flash Next               | 103.69 GiB | ROCm (HIP) |              pp512 |       1240.82 ± 0.00 |
+

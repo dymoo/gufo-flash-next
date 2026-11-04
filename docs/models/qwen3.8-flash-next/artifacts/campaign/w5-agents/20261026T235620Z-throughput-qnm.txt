@@ -1,0 +1,1 @@
+server-qnm.log | span=688s reqs=232 | decode: avg=39 busy_avg=40 peak10s=74 peak60s=59 busy_frac=98% | prefill: avg=580 busy_avg=718 peak10s=2010 peak60s=786 busy_frac=81%

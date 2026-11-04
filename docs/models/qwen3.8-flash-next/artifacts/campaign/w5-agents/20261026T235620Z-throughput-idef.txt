@@ -1,0 +1,1 @@
+server-idef.log | span=688s reqs=214 | decode: avg=40 busy_avg=41 peak10s=66 peak60s=55 busy_frac=98% | prefill: avg=554 busy_avg=682 peak10s=1939 peak60s=818 busy_frac=81%
