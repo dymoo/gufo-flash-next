@@ -390,7 +390,8 @@ PMC counters only in a separate diagnostic pass
 ### Hardware counters (PMC)
 
 `rocprofv3` (rocprofiler-sdk 1.1.0, ROCm 7.2.3) collects counters on gfx1151
-once `libhsa-amd-aqlprofile64.so` is present: install the apt package
+once `libhsa-amd-aqlprofile64.so` is present; without it `rocprofv3-avail`
+fails, as on a minimal ROCm install. Install the apt package
 `hsa-amd-aqlprofile`, or extract its `.deb` with `dpkg -x` and put the library
 directory on `LD_LIBRARY_PATH` (`tools/prof/pmc.py --aqlprofile-dir`).
 `rocprofv3-avail list --pmc` shows what the device offers:
