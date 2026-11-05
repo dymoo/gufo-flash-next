@@ -7195,6 +7195,15 @@ __launch_bounds__(256) __global__ void DenseF16GEMMKernel(
   // nearby rows are permuted so a fragment read (one row per lane, 64-byte
   // stride) covers all bank groups. kI4 stages only two activation slabs of
   // BK 32-wide K chunks.
+  //
+  // The BK K-block planes are a multiple of 128 bytes apart, and the stage
+  // commit assigns neighbouring lanes to the planes of one row, so a row-only
+  // permutation made every plane pair of a 16-byte store hit the same bank
+  // group (two-way conflicts on every commit store, 12% of the LDS cycles).
+  // The plane index is therefore folded into the permutation: an eight-lane
+  // store covers eight distinct bank groups, and a fragment read (one plane,
+  // consecutive rows) stays conflict free. Only the chunk's slot moves; every
+  // value, product and accumulation order is unchanged.
   constexpr int kI4SlabChunks = BN * BK;
   constexpr int kI4Epilogue =
       kSsmConv ? 8 * kSsmProjectionTileTokens * 36 * 4 / 16 : 1024;
@@ -7208,7 +7217,12 @@ __launch_bounds__(256) __global__ void DenseF16GEMMKernel(
   __shared__ __attribute__((aligned(16))) uint4 s_lds[kLdsStorage];
   auto* s_a = reinterpret_cast<uint4(*)[BM][4]>(s_lds);
   auto* s_b = reinterpret_cast<uint4(*)[BN][4]>(s_lds + (BK * BM * 4));
-  const auto swizzle = [](int row, int c) { return c ^ ((row >> 1) & 3); };
+  const auto swizzle = [](int row, int c, int kk) {
+    // BK = 2 stages pair the two planes of a row in adjacent lanes (xor 2 keeps
+    // the row terms of rows two apart disjoint); BK = 4 puts four planes in
+    // adjacent lanes (xor kk).
+    return c ^ (((row >> 1) ^ (BK == 2 ? kk << 1 : kk)) & 3);
+  };
 
   const int num_kb = static_cast<int>(k / 32);
   const int m_i = static_cast<int>(m);
@@ -7311,7 +7325,7 @@ __launch_bounds__(256) __global__ void DenseF16GEMMKernel(
       if constexpr (kHalfWeights) {
 #pragma unroll
         for (int c = 0; c < 4; ++c)
-          s_a[kk][row][swizzle(row, c)] = a_half[p][c];
+          s_a[kk][row][swizzle(row, c, kk)] = a_half[p][c];
       } else {
         // Q8_0 codes are signed; flipping the sign bit carries q + 128, which
         // the 1152 magic takes back out.
@@ -7330,7 +7344,7 @@ __launch_bounds__(256) __global__ void DenseF16GEMMKernel(
         for (int c = 0; c < 4; ++c) {
           uint4 v;
           __builtin_memcpy(&v, &h[4 * c], 16);
-          s_a[kk][row][swizzle(row, c)] = v;
+          s_a[kk][row][swizzle(row, c, kk)] = v;
         }
       }
     }
@@ -7344,7 +7358,7 @@ __launch_bounds__(256) __global__ void DenseF16GEMMKernel(
       const int kk = idx % BK;
 #pragma unroll
       for (int c = 0; c < 4; ++c) {
-        s_b[kk][t][swizzle(t, c)] = b_data[p][c];
+        s_b[kk][t][swizzle(t, c, kk)] = b_data[p][c];
       }
     }
   };
@@ -7388,7 +7402,7 @@ __launch_bounds__(256) __global__ void DenseF16GEMMKernel(
           uint4 c[4];
 #pragma unroll
           for (int q = 0; q < 4; ++q) {
-            c[q] = s_a[kb][row][swizzle(row, q)];
+            c[q] = s_a[kb][row][swizzle(row, q, kb)];
           }
           __builtin_memcpy(&a_lo[i], &c[0], 32);
           __builtin_memcpy(&a_hi[i], &c[2], 32);
@@ -7399,7 +7413,7 @@ __launch_bounds__(256) __global__ void DenseF16GEMMKernel(
           uint4 c[4];
 #pragma unroll
           for (int q = 0; q < 4; ++q) {
-            c[q] = s_b[kb][t][swizzle(t, q)];
+            c[q] = s_b[kb][t][swizzle(t, q, kb)];
           }
           v16h b_lo;
           v16h b_hi;

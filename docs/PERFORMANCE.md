@@ -434,7 +434,8 @@ power follows operand toggling: the calibrator's constant operands hold
 2.25–2.5 GHz at 139–156 W. Judge a kernel in cycles as well as microseconds,
 compare variants in interleaved runs, and fill synthetic ablation inputs with
 random data (constants raised a kernel's clock by 15% and made it look
-14–20% faster).
+14–20% faster). The first counter pass, of the dense F16 prefill GEMMs, is in
+[the Flash-Next experiments](models/qwen3.8-flash-next/EXPERIMENTS.md#dense-f16-prefill-counter-pass-2026-11-05).
 
 ### Instruction mix
 
