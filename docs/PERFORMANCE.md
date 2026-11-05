@@ -384,7 +384,59 @@ nix develop -c rocprofv3 \
 ```
 
 Use the emitted ROCTx case marker to isolate the measured region. Add selected
-PMC counters only in a separate diagnostic pass.
+PMC counters only in a separate diagnostic pass
+([hardware counters](#hardware-counters-pmc)).
+
+### Hardware counters (PMC)
+
+`rocprofv3` (rocprofiler-sdk 1.1.0, ROCm 7.2.3) collects counters on gfx1151
+once `libhsa-amd-aqlprofile64.so` is present; without it `rocprofv3-avail`
+fails, as on a minimal ROCm install. Install the apt package
+`hsa-amd-aqlprofile`, or extract its `.deb` with `dpkg -x` and put the library
+directory on `LD_LIBRARY_PATH` (`tools/prof/pmc.py --aqlprofile-dir`).
+`rocprofv3-avail list --pmc` shows what the device offers:
+
+| Block | Counters |
+| --- | --- |
+| GRBM | `GRBM_COUNT`, `GRBM_GUI_ACTIVE`; the real clock is `GRBM_COUNT` / dispatch time |
+| SQ, one instance per WGP | `SQ_WAVES`, `SQ_WAVE_CYCLES`, `SQ_BUSY_CYCLES`, `SQ_INSTS_{VALU,SALU,SMEM,LDS,FLAT,TEX_LOAD,TEX_STORE}`, `SQ_INSTS_WAVE32*`, `SQC_LDS_BANK_CONFLICT`, `SQC_LDS_IDX_ACTIVE` (the last two are modelled from the instruction stream, not measured stalls) |
+| GL2C, four slices | `GL2C_HIT`, `GL2C_MISS`, `GL2C_EA_RDREQ_{32,64,96,128}B`, `GL2C_MC_RDREQ`, `GL2C_EA_WRREQ_64B`, `GL2C_MC_WRREQ`, `GL2C_MC_WRREQ_STALL` |
+| TA | `TA_TA_BUSY` |
+
+Derived counters (`FETCH_SIZE`, `WRITE_SIZE`, `L2CacheHit`, `LDSBankConflict`,
+`MeanOccupancyPerCU`, `OccupancyPercent`, `MemUnitBusy`) expand to these.
+There is no stall-reason counter (`SQ_WAIT_*`, `SQ_ACTIVE_INST_*`), no
+WMMA-specific counter (WMMA counts as VALU, so derive its count from the
+problem shape) and no L0/GL1 (`TCP_*`) counter. ROCm Compute Profiler
+(`rocprofiler-compute` 3.4.0) does not support gfx1151: its SoC modules cover
+gfx908, gfx90a, gfx940/941/942 and gfx950 only. Thread trace
+(`rocprofv3 --att`) needs `rocprof-trace-decoder`, which is not packaged here;
+untried.
+
+A pass takes only a few counters per block: two GL2C counters fit, eight fail
+with "Request exceeds the capabilities of the hardware to collect", and the
+aborted process can then spin for minutes in the crash handler.
+`tools/prof/pmc.py` therefore runs the command once per counter group, with a
+timeout, and prints one row per kernel (clock, instructions per wave, LDS bank
+conflicts, L2 hit rate, fabric read bytes, occupancy). Counter runs serialize
+dispatches: launch the kernel a handful of times and drop the cold ones.
+
+```sh
+DENSE_BENCH_SHAPE=ssm_in DENSE_BENCH_ROWS=2048 DENSE_BENCH_ROUTE=f16 \
+DENSE_BENCH_REPS=1 DENSE_BENCH_LAUNCHES=4 \
+  python3 tools/prof/pmc.py run --kernel DenseF16GEMMKernel --skip 3 \
+    --out /tmp/pmc -- ./build/gpu-test/tests/models/qwen38_flash_next/qwen38_flash_next_batch_dense_bench \
+    models/qwen3.8-flash-next/UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf prefill
+```
+
+Matrix ceilings depend on the clock. The package is power limited and WMMA
+power follows operand toggling: the calibrator's constant operands hold
+2.9 GHz, while a kernel streaming random weights and activations sustained
+2.25–2.5 GHz at 139–156 W. Judge a kernel in cycles as well as microseconds,
+compare variants in interleaved runs, and fill synthetic ablation inputs with
+random data (constants raised a kernel's clock by 15% and made it look
+14–20% faster). The first counter pass, of the dense F16 prefill GEMMs, is in
+[the Flash-Next experiments](models/qwen3.8-flash-next/EXPERIMENTS.md#dense-f16-prefill-counter-pass-2026-11-05).
 
 ### Instruction mix
 

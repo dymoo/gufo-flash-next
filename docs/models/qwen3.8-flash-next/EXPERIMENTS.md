@@ -93,6 +93,8 @@
 | Flex prompts only in steps with a default prompt or no default decoder; flex prefill always chunked | Retained (default `--flex-sessions 2`): light-load ITL p50/p90 73/92 → 84/113 ms, turns within run-to-run noise (two identical baselines: 89 and 76); standard load 199 turns. Flex itself completed 7–8 turns in 5–10 min: agent traffic leaves little idle compute, so flex is for genuinely idle periods such as overnight batch work. |
 | NVIDIA FP4-QAT checkpoint → INT4, baseline-identical tensor types | Rejected (2026-10-24): decode KL 0.078 and top-1 92.8% vs UD-Q4_K_XL, ppl +2.2%; prefill at parity; coding swarm 176/140 vs 124/164 correct/h, overlapping CIs, 4/83 failures vs 0/72. Adapter not run. [Details](#nvidia-fp4-qat-checkpoint-2026-10-24). |
 | Speed campaign (2026-10-25/26): retained and rejected ideas, A/B numbers, evidence paths | [Section below](#speed-campaign-october-2026). Retained: exact decode kernels, int4 dense prefill, F16 GDN state, GPTQ decode twins, MoE macro batch, combined MTP policy, block-selection fix. Rejected: top-k routing for agents, routed int4 experts and the F16 residual (prefill-row budget), chunked GDN prefill, AutoRound experts, power and clock knobs. |
+| Plane-aware LDS chunk swizzle in the dense F16 GEMM | Retained, bit-identical: the K-block planes of a BK = 2 stage are a multiple of 128 bytes apart and the commit assigns neighbouring lanes to the two planes of a row, so every 16-byte commit store had a two-way bank conflict (12% of LDS-active cycles, `SQC_LDS_BANK_CONFLICT` 2048 cycles per wave). Folding the plane index into the chunk permutation (`(row >> 1) ^ (kk << 1)`) leaves 0.8%. Real Q8_0 weights, 2048 rows, ten alternating runs counting `GRBM_COUNT` cycles per dispatch (clock independent): ssm_in 16384×2560 −4.9% cycles, attn_qkv −4.5%, ssm_out −4.1%; time +3.5%, +3.3%, +3.8% (the package is power limited, so the clock sags 2% when the pipe is busier). Wall-clock ABBA process pairs in four further experiments: ssm_in +3.4% to +3.6% (+0.4% in one cool-start run whose baseline alternated between two clock states, 4430 and 4700 µs), attn_qkv +3.0% to +4.5%, ssm_out +1.7% to +4.1%, attn_out +2.8% to +3.5%, ssm_in +2.9% to +5.6% from 256 to 4096 rows; a sustained 2.3 s run +3.4% (4717 → 4564 µs). The BK = 4 tile that serves fewer than 96 rows (batched decode and verification) had four-way conflicts and gains more: decode-mode ABBA against origin/main (six rounds, 429 shape × row × route cases), F16 route at 8–64 rows median +11.2% (hc_down +24% to +27%, shexp_gate +21% to +25%, attn_out +11% to +18%, ssm_out +6% to +15%, shexp_down +9% to +15%, ssm_in +8% to +11%, attn_qkv +5% to +10%), 96–192 rows +1.6%, 256–512 rows +2.5%; the unchanged W8A8 and GEMV routes move −0.1% to −0.7% in the same runs (noise floor). All 85 whole-output hashes of the bench (and 120 at ragged rows 1 to 4095), the FP64-error column of its decode mode (429/429 cases), the `projection_ops_test` and `hc_mix_ops_test` logs and the `blaslt_ops_test` output hashes (F16-weight router and alpha/beta projections) are identical to the base build. BK = 1 tiles are unchanged (hc_up within ±1%) and narrow prefill tiles stay within ±2%. The prefill gain is about 0.7% of a pp2048 pass by the d0 profile's kernel shares (30 ssm_in, 10 attn_qkv, 30 ssm_out and 10 attn_out calls); the small-batch gain is not converted to decode tok/s. Neither is measured end to end. [Counter pass](#dense-f16-prefill-counter-pass-2026-11-05) |
+| Dense F16 GEMM ablations: LDS fragment prefetch, deeper global prefetch, coalesced activation loads, 128-byte-row LDS layout, branch-free fetch, fetch spread over the K loop, LDS-only barriers, `s_setprio`, block phase offset, other tile shapes, swapped WMMA operands | Rejected or neutral, all exact where the output was compared (hash equal): none gives more than the swizzle. Numbers in the [counter pass](#dense-f16-prefill-counter-pass-2026-11-05). |
 
 Separate d32K pp2048 profiling attributes 29.1% of kernel time to MoE, 34.9%
 to dense projections and 12.6% to attention/indexing. Final-tile catch-up
@@ -102,8 +104,9 @@ A d0 pp2048 profile (2026-09-21) is GPU-bound: 1362.8 ms of kernel time in a
 1380 ms span. Routed expert GEMMs take 35%, dense F16 projections 29%,
 hyper-connection combines 10.5%, the GDN recurrence 9.5%, HC down/inject/shared
 projections 7% and attention 5.5%. The dense projections run at 30–34 TFLOPS
-against the measured 59 TFLOPS matrix ceiling and the combines at about
-200 GB/s; the routed gate/up and down kernels stream 0.9–1.1 GB of expert
+against the measured 59 TFLOPS matrix ceiling (a 2.9 GHz burst number; the
+kernels sustain 2.25–2.5 GHz, see the [counter pass](#dense-f16-prefill-counter-pass-2026-11-05))
+and the combines at about 200 GB/s; the routed gate/up and down kernels stream 0.9–1.1 GB of expert
 weights per layer at 160–190 GB/s.
 
 A C4 mixed MTP trace with 32 output tokens per request is 84.9% GPU-busy
@@ -116,6 +119,61 @@ not unprofiled throughput measurements.
 Next: improve prefill at depth and target/draft batch projection reuse while
 preserving [quality](QUALITY.md). The 1700 tok/s PP and flat d0–d128K
 objectives remain unmet; see [current benchmarks](BENCHMARKS.md).
+
+## Dense F16 prefill counter pass (2026-11-05)
+
+First hardware-counter pass over this code (`rocprofv3` 1.1.0, ROCm 7.2.3,
+`tools/prof/pmc.py`; counter set and pitfalls in
+[PERFORMANCE](../../PERFORMANCE.md#hardware-counters-pmc)). Question: why do the
+dense F16 projections run at 30–34 TFLOPS at pp2048 against a 59 TFLOPS matrix
+ceiling? Case: `qwen38_flash_next_batch_dense_bench <shard> prefill` with
+`DENSE_BENCH_SHAPE=ssm_in DENSE_BENCH_ROWS=2048 DENSE_BENCH_ROUTE=f16`, real
+Q8_0 weights, four weight copies rotating past the MALL. It ran beside the
+production server on the test host, so absolute times are noisy; every
+comparison is interleaved. The timeline and ablations used a standalone copy of
+`DenseF16GEMMKernel<256, 128, 2, 8, 1>` with the library kernel's resource usage
+(221 VGPRs, 48 KiB LDS, 4 waves per SIMD); it is not retained.
+
+**Answer.** Part of the gap is clock and part is matrix-pipe idle time; neither
+memory nor occupancy is involved.
+
+| Measure (ssm_in 16384×2560, 2048 rows) | Value | Reading |
+| --- | --- | --- |
+| Clock (`GRBM_COUNT` / dispatch time) | 2.44–2.51 GHz; sustained 3–6 s runs 2.25–2.48 GHz at 139–156 W | The 59 TFLOPS ceiling is a 2.9 GHz number. The SoC is power limited and WMMA power depends on operand toggling: the calibrator's constant operands hold 2.9 GHz, the same kernel shape fed constants ran at 2.6–2.9 GHz and 42.9 TFLOPS, fed pseudo-random words 2.34 GHz and 38.7. At 2.45 GHz the measured F16 WMMA ceiling is about 47 TFLOPS |
+| Occupancy | 7.8 waves per CU of 8; WGPs busy 98.5% of active cycles | full: 1024 blocks × 8 waves, `SQ_WAVES` exactly 8192 |
+| Matrix pipe | about 78% of WMMA issue slots in the K loop: 11 230 cycles per wave-stage with four waves per SIMD, against 4 × 2200 | the part that is left to close |
+| Instructions per wave | 8274 VALU (2560 of them WMMA), 3776 LDS, 1066 SALU | dequantization is not the cost: removing it changed nothing |
+| LDS | `SQC_LDS_IDX_ACTIVE` (modelled, 4 cycles per `ds_*_b128`); bank conflicts 12.0%, 2048 cycles per wave, all in the stage commit stores | now 0.8% |
+| LDS bandwidth | about 70 B/clk per WGP in the K loop, 55% of 128 B/clk (calibrator: 6.8 TB/s, 117 B/clk per WGP at 2.9 GHz); 67% at the full matrix rate | a co-limiter, not a wall |
+| L2 and fabric | L2 hit 70.8%; 360 MB read from the fabric per dispatch for 55 MB of unique data, about 75 GB/s. A 64 MiB write between launches (cold MALL): hit 71.3%, +2.2% time | d32K behaves like d0 for these GEMMs. Making the weights, the activations or both cache resident changed time by −0.3% to +1.1% |
+| Wave time, K loop (cycles) | commit (load wait, dequant, LDS stores) 11.1%, barrier 1 3.8%, fetch issue 4.7%, compute 69.2%, barrier 2 9.4%; the output stage adds about 6% of the loop | removing the output stage entirely is +8.7%; direct stores without the LDS transpose were not faster, so the stores themselves are the cost |
+
+**Ablations** (`ssm_in`, 2048 rows, output hash equal unless noted, interleaved
+in one process; this loop's schedule is fragile, so each variant's ISA and VGPR
+count were checked):
+
+| Variant | Result |
+| --- | --- |
+| Plane-aware swizzle (retained) | +3.0% to +3.4% |
+| 128-byte-row LDS layout; the same with 8-lane coalesced activation loads | +3.1%; +2.4% (the swizzle's gain, coalescing adds nothing) |
+| Global prefetch two stages ahead | +3.2% (swizzle alone +3.0%) |
+| One to three token tiles of LDS fragment prefetch | ±0.2%: the compiler sinks the loads back to their use. The 2026 campaign's forced double buffer (221 → 253 VGPRs) was 3–14% slower |
+| Aligned weight blocks without the scale load | +1.1% |
+| Branch-free or unguarded fetch | −13%: the scheduler hoists the stage commit next to the loads and exposes their latency |
+| Fetch spread across the K loop | 256 VGPRs with spills, −63% |
+| LDS-only barriers (no `vmcnt(0)` or L0 invalidate); `s_setprio` | 0%; −1% |
+| Half a stage of start delay for every second block of a WGP | +0.1% to +0.5% (noise) |
+| Other tiles against the swizzled 8×1 BK 2: 4×2 BK 2, 4×2 BK 1, 128×128 BK 4, 128×256 | −2%, −16%, −15%, −13% |
+| Swapped WMMA operands with direct coalesced output stores | bit-identical (the dot product is symmetric in A and B) but −1% |
+| Zeroing the upper 16 lanes of an operand | changes the result: both lane halves are read |
+| Constants instead of loaded data | +12% to +20%, an artifact of the clock; +4% with pseudo-random words |
+
+Reproduction: `tools/prof/pmc.py run --kernel DenseF16GEMMKernel --skip 3 --out
+/tmp/pmc -- <bench>` with the environment above plus `DENSE_BENCH_REPS=1
+DENSE_BENCH_LAUNCHES=4`. The routed GEMMs also show LDS bank conflicts
+(`moe_bench --rows 2048 --paths wmma`, layer 3: 4.5% of LDS cycles for the Q4_K
+gate/up, 12.1% for the Q5_1 down projection); their layout has four LDS arrays
+and was not changed.
 
 ## NVIDIA FP4-QAT checkpoint (2026-10-24)
 
