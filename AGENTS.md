@@ -53,7 +53,8 @@ expose risk.
 Apply [.agents/skills/optimize-kernel/SKILL.md](.agents/skills/optimize-kernel/SKILL.md).
 Use `tools/bench/build.sh` for standalone HIP experiments,
 `tools/bench/gfx1151_peak.hip` for measured hardware ceilings,
-`tools/prof/prof.py` for pipeline/wall-time profiles, and
+`tools/prof/prof.py` for pipeline/wall-time profiles,
+`tools/prof/pmc.py` for hardware-counter passes, and
 `tools/prof/isa_mix.py` for instruction analysis. Production paths must retain
 quality; successful optimizations become the default, without extra switches.
 

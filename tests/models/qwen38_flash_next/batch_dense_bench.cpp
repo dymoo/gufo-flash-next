@@ -5,7 +5,9 @@
 // Every route is checked against an FP64 dot of the dequantized weights.
 //   qwen38_flash_next_batch_dense_bench <first-target-shard.gguf> [prefill]
 // `prefill` times the tiled routes alone (activations staged once) at
-// 256..2048 rows, with TFLOPS and an FNV hash of the whole output.
+// 256..4096 rows, with TFLOPS and an FNV hash of the whole output.
+// DENSE_BENCH_{SHAPE,ROWS,ROUTE,REPS,LAUNCHES,FLUSH} select one case for
+// counter passes and interleaved A/B runs (details at the prefill loop).
 // Uses about 1.8 GiB of device memory; four weight copies per shape rotate
 // beyond the 32 MiB MALL.
 #include <hip/hip_fp16.h>
@@ -218,14 +220,45 @@ int main(int argc, char** argv) {
   Check(hipEventCreate(&start), "event");
   Check(hipEventCreate(&end), "event");
   if (prefill) {
+    // Diagnostics, all optional. DENSE_BENCH_SHAPE=ssm_in selects one shape,
+    // DENSE_BENCH_ROWS=2048 one row count (any value up to 4096, ragged ones
+    // too), DENSE_BENCH_ROUTE=w8a8|f16|hcdown one route. DENSE_BENCH_REPS and
+    // DENSE_BENCH_LAUNCHES set the timed repetitions (default 5) and launches
+    // per repetition (default 8); DENSE_BENCH_FLUSH=1 writes 64 MiB before
+    // every repetition so the MALL starts cold. A counter pass uses REPS=1
+    // LAUNCHES=4 so each dispatch is counted once.
+    const char* want_shape = std::getenv("DENSE_BENCH_SHAPE");
+    const char* want_route = std::getenv("DENSE_BENCH_ROUTE");
+    const auto env_uint = [](const char* name, unsigned fallback) {
+      const char* v = std::getenv(name);
+      return v != nullptr && *v != '\0'
+                 ? static_cast<unsigned>(std::strtoul(v, nullptr, 10))
+                 : fallback;
+    };
+    const unsigned want_rows = env_uint("DENSE_BENCH_ROWS", 0);
+    std::vector<std::uint32_t> row_list{256U, 512U, 1024U, 2048U, 4096U};
+    if (want_rows != 0)
+      row_list = {std::min(want_rows, kMaxRows)};
+    const unsigned reps = std::max(1U, env_uint("DENSE_BENCH_REPS", 5));
+    const unsigned launches = std::max(1U, env_uint("DENSE_BENCH_LAUNCHES", 8));
+    void* flush = nullptr;
+    if (env_uint("DENSE_BENCH_FLUSH", 0) != 0)
+      Check(hipMalloc(&flush, std::size_t{64} << 20), "flush");
     std::puts("shape,m,k,rows,route,us,TFLOPS,hash");
     for (auto& s : shapes) {
-      for (const std::uint32_t rows : {256U, 512U, 1024U, 2048U, 4096U}) {
+      if (want_shape != nullptr && std::string(want_shape) != s.name)
+        continue;
+      for (const std::uint32_t rows : row_list) {
         q::QuantizeQ8Tiled(dx, xq8t, rows, s.k, stream);
         q::NarrowActivations(dx, xh, false, std::size_t{rows} * s.k, stream);
         // hc_down also runs its production fused kernel (F16 SiLU output).
         const int routes = s.m == 320 && s.k == 10240 ? 3 : 2;
         for (int route = 0; route < routes; ++route) {
+          const char* route_name = route == 0   ? "w8a8"
+                                   : route == 1 ? "f16"
+                                                : "hcdown";
+          if (want_route != nullptr && std::string(want_route) != route_name)
+            continue;
           const auto run = [&](int i) {
             const void* w = s.copies[i % s.copies.size()];
             if (route == 2)
@@ -250,23 +283,25 @@ int main(int argc, char** argv) {
           for (int i = 1; i < 3; ++i)
             run(i);
           std::vector<float> us;
-          for (int rep = 0; rep < 5; ++rep) {
+          for (unsigned rep = 0; rep < reps; ++rep) {
+            if (flush != nullptr)
+              Check(hipMemsetAsync(flush, static_cast<int>(rep), 64 << 20,
+                                   stream),
+                    "flush");
             Check(hipEventRecord(start, stream), "record");
-            for (int i = 0; i < 8; ++i)
-              run(i);
+            for (unsigned i = 0; i < launches; ++i)
+              run(static_cast<int>(i));
             Check(hipEventRecord(end, stream), "record");
             Check(hipEventSynchronize(end), "sync");
             float ms = 0;
             Check(hipEventElapsedTime(&ms, start, end), "elapsed");
-            us.push_back(1000.0F * ms / 8);
+            us.push_back(1000.0F * ms / static_cast<float>(launches));
           }
           std::sort(us.begin(), us.end());
+          const float median = us[us.size() / 2];
           std::printf("%s,%u,%u,%u,%s,%.1f,%.1f,%016llx\n", s.name, s.m, s.k,
-                      rows,
-                      route == 0   ? "w8a8"
-                      : route == 1 ? "f16"
-                                   : "hcdown",
-                      us[2], 2.0 * s.m * s.k * rows / us[2] / 1e6,
+                      rows, route_name, median,
+                      2.0 * s.m * s.k * rows / median / 1e6,
                       static_cast<unsigned long long>(hash));
         }
       }

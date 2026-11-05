@@ -141,7 +141,8 @@ compiler and dependency versions fixed across compared runs. Follow
 [kernel optimization skill](../.agents/skills/optimize-kernel/SKILL.md). Use
 `tools/bench/build.sh` for standalone HIP experiments,
 `tools/bench/gfx1151_peak.hip` for measured hardware ceilings,
-`tools/prof/prof.py` for pipeline and wall-time profiles, and
+`tools/prof/prof.py` for pipeline and wall-time profiles,
+`tools/prof/pmc.py` for hardware-counter passes, and
 `tools/prof/isa_mix.py` for instruction analysis. Retained numbers belong in
 `docs/models/<model>/BENCHMARKS.md` under the rules in
 [benchmarking](BENCHMARKS.md).
